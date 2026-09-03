@@ -1,0 +1,165 @@
+workflows:
+  macos-beta-release:
+    name: macOS Beta Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      groups:
+        - github_credentials
+      vars:
+        APP_NAME: "MacMirror"
+        BUNDLE_ID: "com.angelsoft.MacMirrorApp"
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*-beta*'
+          include: true
+    scripts:
+      - name: Build macOS App Archive
+        script: |
+          set -e
+          set -x
+          
+          VERSION_NAME=${CM_TAG#v}
+          
+          xcodebuild archive \
+            -project "MacMirror.xcodeproj" \
+            -scheme "MacMirror" \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/build/$APP_NAME.xcarchive" \
+            MARKETING_VERSION="$VERSION_NAME" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Create DMG package
+        script: |
+          set -e
+          set -x
+          
+          mkdir -p "$CM_BUILD_DIR/dist"
+          APP_PATH="$CM_BUILD_DIR/build/$APP_NAME.xcarchive/Products/Applications/$APP_NAME.app"
+          
+          codesign --force --deep -s - "$APP_PATH"
+          
+          DMG_NAME="$APP_NAME-$CM_TAG.dmg"
+          hdiutil create \
+            -volname "$APP_NAME" \
+            -srcfolder "$APP_PATH" \
+            -ov -format UDZO \
+            "$CM_BUILD_DIR/dist/$DMG_NAME"
+      - name: Publish to GitHub Releases
+        script: |
+          set -e
+          set -x
+          
+          if [ -z "$CM_TAG" ]; then
+            echo "Not a tag build, skipping GitHub Release"
+            exit 0
+          fi
+          
+          export GH_TOKEN="$GITHUB_TOKEN"
+          DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-$CM_TAG.dmg"
+          
+          if gh release view "$CM_TAG" >/dev/null 2>&1; then
+            gh release upload "$CM_TAG" "$DMG_PATH" --clobber
+          else
+            gh release create "$CM_TAG" \
+              --title "MacMirror macOS $CM_TAG" \
+              --generate-notes \
+              --prerelease \
+              "$DMG_PATH"
+          fi
+    artifacts:
+      - dist/*.dmg
+    publishing:
+      email:
+        recipients:
+          - angelvelasquezdev@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  macos-production-release:
+    name: macOS Production Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      groups:
+        - github_credentials
+      vars:
+        APP_NAME: "MacMirror"
+        BUNDLE_ID: "com.angelsoft.MacMirrorApp"
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*-beta*'
+          include: false
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - name: Build macOS App Archive
+        script: |
+          set -e
+          set -x
+          
+          VERSION_NAME=${CM_TAG#v}
+          
+          xcodebuild archive \
+            -project "MacMirror.xcodeproj" \
+            -scheme "MacMirror" \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/build/$APP_NAME.xcarchive" \
+            MARKETING_VERSION="$VERSION_NAME" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Create DMG package
+        script: |
+          set -e
+          set -x
+          
+          mkdir -p "$CM_BUILD_DIR/dist"
+          APP_PATH="$CM_BUILD_DIR/build/$APP_NAME.xcarchive/Products/Applications/$APP_NAME.app"
+          
+          codesign --force --deep -s - "$APP_PATH"
+          
+          DMG_NAME="$APP_NAME-$CM_TAG.dmg"
+          hdiutil create \
+            -volname "$APP_NAME" \
+            -srcfolder "$APP_PATH" \
+            -ov -format UDZO \
+            "$CM_BUILD_DIR/dist/$DMG_NAME"
+      - name: Publish to GitHub Releases
+        script: |
+          set -e
+          set -x
+          
+          if [ -z "$CM_TAG" ]; then
+            echo "Not a tag build, skipping GitHub Release"
+            exit 0
+          fi
+          
+          export GH_TOKEN="$GITHUB_TOKEN"
+          DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-$CM_TAG.dmg"
+          
+          if gh release view "$CM_TAG" >/dev/null 2>&1; then
+            gh release upload "$CM_TAG" "$DMG_PATH" --clobber
+          else
+            gh release create "$CM_TAG" \
+              --title "MacMirror macOS $CM_TAG" \
+              --generate-notes \
+              "$DMG_PATH"
+          fi
+    artifacts:
+      - dist/*.dmg
+    publishing:
+      email:
+        recipients:
+          - angelvelasquezdev@gmail.com
+        notify:
+          success: true
+          failure: true
