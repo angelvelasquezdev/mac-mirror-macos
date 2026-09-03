@@ -1,0 +1,31 @@
+/* 
+  Localizable.strings (English)
+  MacMirror
+*/
+
+"app_name" = "MacMirror";
+"ip_format" = "IP: %@";
+"status_connected" = "Connected";
+"status_waiting" = "Waiting";
+
+"menu_send_test" = "Send Test Notification";
+"menu_unpair" = "Unpair Android Device";
+"menu_quit" = "Quit MacMirror";
+
+"header_paired_phone" = "PAIRED PHONE";
+"header_recent_notifications" = "RECENT NOTIFICATIONS";
+"button_clear" = "Clear";
+
+"empty_notifications_title" = "No Notifications";
+"empty_notifications_desc" = "Notifications mirrored from your Android phone will appear here in real time.";
+
+"connect_phone_title" = "Connect Your Phone";
+"connect_phone_desc" = "Open MacMirror on your Android device and enter this pairing code:";
+"button_copy_code" = "Copy Code";
+"button_copied" = "Copied";
+"button_generate_pin" = "Generate New PIN";
+"wifi_notice" = "Ensure both devices are on the same Wi-Fi network.";
+
+"test_notification_title" = "Test Notification";
+"test_notification_text" = "MacMirror is active and ready to mirror notifications.";
+"fallback_android_device" = "Android Device";

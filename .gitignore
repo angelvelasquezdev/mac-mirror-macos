@@ -1,0 +1,33 @@
+# Xcode
+## User settings
+xcuserdata/
+*.xcuserdatad/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+
+## Build generated
+build/
+DerivedData/
+*.moved-aside
+.build/
+
+## Various settings
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## Swift Package Manager
+.swiftpm/xcode
+.swiftpm/configuration
+
+## macOS and Environment
+.DS_Store
+*.swp
+*~
+AppIcon.jpg

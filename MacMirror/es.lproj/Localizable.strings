@@ -1,0 +1,31 @@
+/* 
+  Localizable.strings (Spanish)
+  MacMirror
+*/
+
+"app_name" = "MacMirror";
+"ip_format" = "IP: %@";
+"status_connected" = "Conectado";
+"status_waiting" = "En espera";
+
+"menu_send_test" = "Enviar notificación de prueba";
+"menu_unpair" = "Desvincular dispositivo Android";
+"menu_quit" = "Salir de MacMirror";
+
+"header_paired_phone" = "TELÉFONO VINCULADO";
+"header_recent_notifications" = "NOTIFICACIONES RECIENTES";
+"button_clear" = "Borrar";
+
+"empty_notifications_title" = "Sin notificaciones";
+"empty_notifications_desc" = "Las notificaciones sincronizadas desde tu teléfono Android aparecerán aquí en tiempo real.";
+
+"connect_phone_title" = "Conecta tu teléfono";
+"connect_phone_desc" = "Abre MacMirror en tu dispositivo Android e introduce este código de vinculación:";
+"button_copy_code" = "Copiar código";
+"button_copied" = "Copiado";
+"button_generate_pin" = "Generar nuevo PIN";
+"wifi_notice" = "Asegúrate de que ambos dispositivos estén en la misma red Wi-Fi.";
+
+"test_notification_title" = "Notificación de prueba";
+"test_notification_text" = "MacMirror está activo y listo para sincronizar notificaciones.";
+"fallback_android_device" = "Dispositivo Android";
