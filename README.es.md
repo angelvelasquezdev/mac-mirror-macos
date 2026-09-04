@@ -89,7 +89,7 @@ brew install --cask angelvelasquezdev/tap/macmirror
 > ```bash
 > xattr -cr /Applications/MacMirror.app
 > ```
-> O haz clic derecho sobre `MacMirror.app` en `/Applications` y selecciona **Abrir**.
+> O ve a **Ajustes del Sistema** → **Privacidad y Seguridad**, desplázate a la sección Seguridad y haz clic en **Abrir de todos modos**.
 
 Para actualizar en el futuro:
 ```bash
@@ -97,7 +97,7 @@ brew upgrade --cask macmirror
 ```
 
 ### Descarga Manual (.dmg)
-Descarga la última imagen de disco desde la página de [Releases](https://github.com/angelvelasquezdev/mac-mirror-macos/releases), abre `MacMirror-vX.Y.Z.dmg` y arrastra `MacMirror.app` a tu carpeta `/Applications`. Si macOS muestra una advertencia al abrirla, ejecuta `xattr -d com.apple.quarantine /Applications/MacMirror.app` o usa clic derecho -> Abrir.
+Descarga la última imagen de disco desde la página de [Releases](https://github.com/angelvelasquezdev/mac-mirror-macos/releases), abre `MacMirror-vX.Y.Z.dmg` y arrastra `MacMirror.app` a tu carpeta `/Applications`. Si macOS muestra una advertencia al abrirla, ejecuta `xattr -cr /Applications/MacMirror.app` o permítela en **Ajustes del Sistema** → **Privacidad y Seguridad** → **Abrir de todos modos**.
 
 ---
 
