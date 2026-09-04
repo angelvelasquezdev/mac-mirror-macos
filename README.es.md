@@ -81,13 +81,13 @@ Desarrollada con **SwiftUI** siguiendo las **Pautas de Interfaz Humana de Apple 
 Puedes instalar MacMirror directamente usando Homebrew:
 
 ```bash
-brew install --cask --no-quarantine angelvelasquezdev/tap/macmirror
+brew install --cask angelvelasquezdev/tap/macmirror
 ```
 
 > [!NOTE]
-> Al ser un proyecto de código abierto sin un certificado de pago de Apple Developer, pasar el flag `--no-quarantine` evita que Gatekeeper bloquee la app en el primer inicio. Si ya la instalaste sin él, ejecuta:
+> Al ser un proyecto de código abierto sin un certificado de pago de Apple Developer, si macOS Gatekeeper bloquea la app en el primer inicio, simplemente ejecuta:
 > ```bash
-> xattr -d com.apple.quarantine /Applications/MacMirror.app
+> xattr -cr /Applications/MacMirror.app
 > ```
 > O haz clic derecho sobre `MacMirror.app` en `/Applications` y selecciona **Abrir**.
 
