@@ -97,6 +97,25 @@ xcodebuild -project MacMirror.xcodeproj -scheme MacMirror -configuration Release
 
 ---
 
+## 🗺️ Hoja de Ruta (Roadmap)
+
+- [ ] 🔋 Mostrar el porcentaje de batería y estado de carga del dispositivo Android en el popover de la barra de menú.
+- [ ] ⌨️ Atajo de teclado global para abrir/cerrar el popover rápidamente (`Cmd + Shift + M`).
+- [ ] 🗑️ Limpiar el historial completo o descartar notificaciones individuales.
+- [ ] 🌐 Nuevas traducciones (Francés, Alemán, Portugués, Italiano, Japonés).
+- [ ] 💬 Acciones rápidas y descarte de notificaciones en tiempo real.
+
+---
+
+## 🤝 Cómo Contribuir
+
+¡Las contribuciones son muy bienvenidas! Ya sea reportando errores, sugiriendo mejoras o traduciendo la app:
+
+1. Revisa las issues abiertas etiquetadas con [`good first issue`](https://github.com/angelvelasquezdev/mac-mirror-macos/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) y [`help wanted`](https://github.com/angelvelasquezdev/mac-mirror-macos/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
+2. Consulta la [Guía de Contribución](CONTRIBUTING.md) para conocer el entorno de desarrollo, estilo de código y flujo de Pull Requests.
+
+---
+
 ## 🔗 Proyectos Relacionados
 
 | Proyecto | Descripción | Repositorio |
