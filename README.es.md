@@ -75,7 +75,26 @@ Desarrollada con **SwiftUI** siguiendo las **Pautas de Interfaz Humana de Apple 
 
 ---
 
-## 🚀 Compilación y Ejecución
+## 📦 Instalación
+
+### Mediante Homebrew (Recomendado)
+Puedes instalar MacMirror directamente usando Homebrew:
+
+```bash
+brew install --cask angelvelasquezdev/tap/macmirror
+```
+
+Para actualizar en el futuro:
+```bash
+brew upgrade --cask macmirror
+```
+
+### Descarga Manual (.dmg)
+Descarga la última imagen de disco desde la página de [Releases](https://github.com/angelvelasquezdev/mac-mirror-macos/releases), abre `MacMirror-vX.Y.Z.dmg` y arrastra `MacMirror.app` a tu carpeta `/Applications`.
+
+---
+
+## 🚀 Compilación desde el Código Fuente
 
 ### 1. Clonar el Repositorio
 ```bash
