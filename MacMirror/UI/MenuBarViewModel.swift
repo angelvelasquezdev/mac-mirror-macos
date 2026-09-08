@@ -2,10 +2,15 @@ import Foundation
 import Combine
 import CryptoKit
 import SwiftUI
+import UserNotifications
 
 @MainActor
 class MenuBarViewModel: ObservableObject {
+    static let shared = MenuBarViewModel()
+
     @Published var isPaired: Bool = false
+    @Published var isClientConnected: Bool = false
+    @Published var notificationPermissionGranted: Bool = true
     @Published var pairedDeviceName: String?
     @Published var pairingPin: String = ""
     @Published var localIP: String = "Unknown"
@@ -14,6 +19,7 @@ class MenuBarViewModel: ObservableObject {
     private let server = HTTPServer()
     private let wsServer = WebSocketServer()
     private let publisher = BonjourPublisher()
+    private var lastClientActivity: Date = .distantPast
     
     // Ephemeral pairing session state
     private var ephemeralPrivateKey: P256.KeyAgreement.PrivateKey?
@@ -57,8 +63,9 @@ class MenuBarViewModel: ObservableObject {
         setupServerHandlers()
         setupWebSocketHandlers()
         
-        // Request macOS native notification permission on startup
+        // Request macOS native notification permission on startup and check status
         NotificationManager.shared.requestPermission()
+        refreshNotificationPermission()
         
         // Start network listener, WebSocket listener and Bonjour publishing
         do {
@@ -70,10 +77,12 @@ class MenuBarViewModel: ObservableObject {
         }
     }
     
-    deinit {
-        server.stop()
-        wsServer.stop()
-        publisher.stopPublishing()
+    func refreshNotificationPermission() {
+        NotificationManager.shared.checkAuthorizationStatus { [weak self] status in
+            Task { @MainActor in
+                self?.notificationPermissionGranted = (status == .authorized || status == .provisional)
+            }
+        }
     }
 
     func generateNewPin() {
@@ -229,6 +238,10 @@ class MenuBarViewModel: ObservableObject {
             guard let self = self else {
                 return (500, Data("{\"error\":\"Internal Server Error\"}".utf8))
             }
+            Task { @MainActor in
+                self.lastClientActivity = Date()
+                self.isClientConnected = true
+            }
             let isCurrentlyPaired = self.isPaired
             let pairedName = self.pairedDeviceName ?? ""
             let statusJson = "{\"paired\":\(isCurrentlyPaired),\"deviceName\":\"\(pairedName)\"}"
@@ -237,8 +250,18 @@ class MenuBarViewModel: ObservableObject {
     }
 
     private func setupWebSocketHandlers() {
+        wsServer.onClientCountChanged = { [weak self] count in
+            Task { @MainActor in
+                self?.isClientConnected = count > 0
+            }
+        }
+
         wsServer.onMessageReceived = { [weak self] message in
             guard let self = self else { return }
+            Task { @MainActor in
+                self.lastClientActivity = Date()
+                self.isClientConnected = true
+            }
             if message.contains("\"action\":\"unpair\"") {
                 Task { @MainActor in
                     self.unpair(notifyClient: false)

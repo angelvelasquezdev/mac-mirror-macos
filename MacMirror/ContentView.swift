@@ -20,7 +20,7 @@ struct VisualEffectView: NSViewRepresentable {
 }
 
 struct ContentView: View {
-    @StateObject private var viewModel = MenuBarViewModel()
+    @ObservedObject var viewModel: MenuBarViewModel = .shared
     @Environment(\.colorScheme) var colorScheme
     @State private var copiedPin: Bool = false
 
@@ -30,6 +30,7 @@ struct ContentView: View {
             HeaderView(
                 localIP: viewModel.localIP,
                 isPaired: viewModel.isPaired,
+                isConnected: viewModel.isPaired && viewModel.isClientConnected,
                 onSendTestNotification: {
                     NotificationManager.shared.showNotification(
                         id: UUID().uuidString,
@@ -51,6 +52,10 @@ struct ContentView: View {
             
             Divider()
                 .opacity(0.12)
+
+            if !viewModel.notificationPermissionGranted {
+                NotificationPermissionWarningView()
+            }
 
             // Main Content Area
             Group {
@@ -88,11 +93,58 @@ struct ContentView: View {
     }
 }
 
+// MARK: - Notification Permission Warning Banner
+
+struct NotificationPermissionWarningView: View {
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+                .font(.system(size: 13))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NSLocalizedString("permission_warning_title", comment: ""))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.primary)
+                Text(NSLocalizedString("permission_warning_desc", comment: ""))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Button(action: {
+                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+                    NSWorkspace.shared.open(url)
+                }
+            }) {
+                Text(NSLocalizedString("permission_warning_button", comment: ""))
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.mini)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.orange.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.orange.opacity(0.25), lineWidth: 0.8)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+    }
+}
+
 // MARK: - Header View (Control Center Inspired)
 
 struct HeaderView: View {
     let localIP: String
     let isPaired: Bool
+    let isConnected: Bool
     let onSendTestNotification: () -> Void
     let onUnpair: () -> Void
     let onQuit: () -> Void
@@ -120,8 +172,8 @@ struct HeaderView: View {
             
             Spacer()
             
-            // High-Contrast Connection Status Pill
-            StatusBadgeView(isOnline: isPaired)
+            // High-Contrast Connection Status Pill (Green when active client is syncing, Orange when waiting)
+            StatusBadgeView(isOnline: isPaired ? isConnected : false)
             
             // Contextual Actions Menu (Apple style ...)
             Menu {
