@@ -29,3 +29,8 @@
 "test_notification_title" = "Test Notification";
 "test_notification_text" = "MacMirror is active and ready to mirror notifications.";
 "fallback_android_device" = "Android Device";
+
+"permission_warning_title" = "Notifications Disabled";
+"permission_warning_desc" = "macOS has blocked notifications for MacMirror. Enable them in System Settings to see incoming alerts.";
+"permission_warning_button" = "Open Settings";
+

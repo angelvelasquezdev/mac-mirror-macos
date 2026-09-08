@@ -83,12 +83,13 @@ final class HTTPServer: @unchecked Sendable {
                 let method = requestLine[0]
                 let path = requestLine[1]
 
-                // Parse Content-Length header
+                // Parse Content-Length header robustly
                 var contentLength = 0
                 for line in lines.dropFirst() {
-                    let parts = line.components(separatedBy: ": ")
-                    if parts.count == 2 && parts[0].lowercased() == "content-length" {
-                        contentLength = Int(parts[1]) ?? 0
+                    let parts = line.components(separatedBy: ":")
+                    if parts.count >= 2 && parts[0].trimmingCharacters(in: .whitespaces).lowercased() == "content-length" {
+                        let valStr = parts.dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces)
+                        contentLength = Int(valStr) ?? 0
                     }
                 }
 

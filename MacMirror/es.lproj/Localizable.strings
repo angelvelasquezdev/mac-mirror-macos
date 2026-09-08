@@ -29,3 +29,8 @@
 "test_notification_title" = "Notificación de prueba";
 "test_notification_text" = "MacMirror está activo y listo para sincronizar notificaciones.";
 "fallback_android_device" = "Dispositivo Android";
+
+"permission_warning_title" = "Notificaciones desactivadas";
+"permission_warning_desc" = "macOS ha bloqueado las notificaciones para MacMirror. Habilítalas en Ajustes del Sistema para recibir alertas.";
+"permission_warning_button" = "Abrir Ajustes";
+

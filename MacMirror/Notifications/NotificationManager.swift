@@ -27,6 +27,12 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
         }
     }
 
+    func checkAuthorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            completion(settings.authorizationStatus)
+        }
+    }
+
     func showNotification(id: String, appName: String, title: String, text: String, appIconBase64: String?) {
         let content = UNMutableNotificationContent()
         
@@ -38,14 +44,12 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
         content.body = text
         content.sound = .default
 
-        var finalContent: UNNotificationContent = content
-
         if let appIconBase64 = appIconBase64,
            !appIconBase64.isEmpty,
            let iconData = Data(base64Encoded: appIconBase64) {
             
-            // 1. Save icon to cache directory and attach as UNNotificationAttachment
-            // This ensures macOS Notification Center displays the Android app icon alongside the banner
+            // Save icon to cache directory and attach as UNNotificationAttachment
+            // This displays the Android app icon alongside the banner natively in macOS
             let safeFileName = "icon_\(UUID().uuidString).png"
             let fileURL = iconCacheDir.appendingPathComponent(safeFileName)
             
@@ -57,42 +61,14 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
                     options: nil
                 )
                 content.attachments = [attachment]
-                finalContent = content
             } catch {
                 print("Failed to attach app icon attachment: \(error)")
-            }
-
-            // 2. Also configure Communication Notification intent with avatar (for supported configurations)
-            let avatarImage = INImage(imageData: iconData)
-            let senderName = title.isEmpty ? appName : title
-            let sender = INPerson(
-                personHandle: INPersonHandle(value: appName, type: .unknown),
-                nameComponents: nil,
-                displayName: senderName,
-                image: avatarImage,
-                contactIdentifier: nil,
-                customIdentifier: nil
-            )
-
-            let intent = INSendMessageIntent(
-                recipients: nil,
-                outgoingMessageType: .outgoingMessageText,
-                content: text,
-                speakableGroupName: nil,
-                conversationIdentifier: id,
-                serviceName: appName,
-                sender: sender,
-                attachments: nil
-            )
-
-            if let updated = try? content.updating(from: intent) {
-                finalContent = updated
             }
         }
 
         let request = UNNotificationRequest(
             identifier: id,
-            content: finalContent,
+            content: content,
             trigger: nil // Deliver immediately
         )
 

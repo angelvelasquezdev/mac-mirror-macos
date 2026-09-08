@@ -17,6 +17,7 @@ struct MacMirrorApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private let popover = NSPopover()
+    private let viewModel = MenuBarViewModel.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 1. Initialize the notification delegate early before launch completes
@@ -25,12 +26,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 2. Configure the app to run as an agent (hide dock icon and app menu)
         NSApp.setActivationPolicy(.accessory)
 
-        // 2. Setup SwiftUI Popover
+        // 3. Setup SwiftUI Popover with persistent shared ViewModel
         popover.contentSize = NSSize(width: 360, height: 520)
         popover.behavior = .transient // Close when user clicks elsewhere
-        popover.contentViewController = NSHostingController(rootView: ContentView())
+        popover.contentViewController = NSHostingController(rootView: ContentView(viewModel: viewModel))
 
-        // 3. Setup Status Bar Menu Item
+        // 4. Setup Status Bar Menu Item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem?.button {
             let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
@@ -49,6 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if popover.isShown {
             popover.performClose(sender)
         } else {
+            viewModel.refreshNotificationPermission()
             popover.show(
                 relativeTo: button.bounds,
                 of: button,
