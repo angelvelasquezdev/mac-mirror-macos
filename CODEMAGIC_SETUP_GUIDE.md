@@ -79,10 +79,21 @@ Ve a la pestaña **Environment variables**:
 
 #### Grupo: `github_credentials`
 * **Variable name**: `GITHUB_TOKEN`
-* **Variable value**: Pega tu token de GitHub (`ghp_...`).
+* **Variable value**: Pega tu token de GitHub (`ghp_...`). Asegúrate de que este token tenga permisos sobre `mac-mirror-macos` y `homebrew-tap` (para actualizar Homebrew automáticamente).
 * **Group**: `github_credentials`
 * Marca la casilla **Secure** (candado).
 * Haz clic en **Add**.
+
+### 3.3 Verificar el Webhook de Activación Automática (GitHub)
+Para que Codemagic se active de manera 100% automática al hacer `push` o crear un `tag`, el repositorio de GitHub debe tener registrado el webhook:
+1. En Codemagic, entra a la aplicación **MacMirror (macOS)** y abre los ajustes de la app (**App settings** / **Webhooks**).
+2. Copia la URL del webhook asignada a tu app (`https://api.codemagic.io/hooks/<APP_ID>`). *(También puedes obtener el `<APP_ID>` directamente de la barra de dirección del navegador: `https://codemagic.io/app/<APP_ID>/...`)*.
+3. En GitHub, abre: `https://github.com/angelvelasquezdev/mac-mirror-macos/settings/hooks/new`.
+4. Configura el webhook:
+   - **Payload URL**: `https://api.codemagic.io/hooks/<APP_ID>`
+   - **Content type**: `application/json`
+   - **Events**: *Let me select individual events* $\rightarrow$ Marca **Pushes**, **Branch or tag creation** y **Pull requests**.
+5. Haz clic en **Add webhook**.
 
 > [!NOTE]
 > Para macOS no necesitas configurar certificados en Codemagic en este momento, ya que configuramos la firma ad-hoc para código abierto (`CODE_SIGN_IDENTITY="-"`).

@@ -78,10 +78,15 @@ Desarrollada con **SwiftUI** siguiendo las **Pautas de Interfaz Humana de Apple 
 ## 📦 Instalación
 
 ### Mediante Homebrew (Recomendado)
-Puedes instalar MacMirror directamente usando Homebrew:
 
+**Canal Estable:**
 ```bash
 brew install --cask angelvelasquezdev/tap/macmirror
+```
+
+**Canal Beta:**
+```bash
+brew install --cask angelvelasquezdev/tap/macmirror-beta
 ```
 
 > [!NOTE]
@@ -93,7 +98,8 @@ brew install --cask angelvelasquezdev/tap/macmirror
 
 Para actualizar en el futuro:
 ```bash
-brew upgrade --cask macmirror
+brew upgrade --cask macmirror       # Para canal estable
+brew upgrade --cask macmirror-beta  # Para canal beta
 ```
 
 ### Descarga Manual (.dmg)

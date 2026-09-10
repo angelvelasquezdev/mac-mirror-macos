@@ -15,6 +15,7 @@ workflows:
       tag_patterns:
         - pattern: 'v*-beta*'
           include: true
+      cancel_previous_builds: true
     scripts:
       - name: Build macOS App Archive
         script: |
@@ -71,6 +72,48 @@ workflows:
               --prerelease \
               "$DMG_PATH"
           fi
+      - name: Update Homebrew Tap (Beta)
+        script: |
+          set -e
+          set -x
+          
+          if [ -z "$CM_TAG" ]; then
+            echo "Not a tag build, skipping Homebrew Tap update"
+            exit 0
+          fi
+          
+          VERSION_NAME="${CM_TAG#v}"
+          DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-$CM_TAG.dmg"
+          DMG_SHA256=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+          
+          echo "Updating Homebrew Tap (Beta) to $VERSION_NAME ($DMG_SHA256)..."
+          
+          TAP_DIR="$CM_BUILD_DIR/homebrew-tap"
+          rm -rf "$TAP_DIR"
+          git clone "https://x-access-token:$GITHUB_TOKEN@github.com/angelvelasquezdev/homebrew-tap.git" "$TAP_DIR"
+          
+          cd "$TAP_DIR"
+          CASK_FILE="Casks/macmirror-beta.rb"
+          
+          if [ ! -f "$CASK_FILE" ]; then
+            echo "Error: $CASK_FILE does not exist in tap repository!"
+            exit 1
+          fi
+          
+          sed -i '' -e "s/version \".*\"/version \"$VERSION_NAME\"/" "$CASK_FILE"
+          sed -i '' -e "s/sha256 \".*\"/sha256 \"$DMG_SHA256\"/" "$CASK_FILE"
+          
+          git config user.name "Codemagic CI"
+          git config user.email "ci@codemagic.io"
+          
+          if git diff --quiet; then
+            echo "No changes detected in $CASK_FILE"
+          else
+            git add "$CASK_FILE"
+            git commit -m "chore(cask): update macmirror-beta to $CM_TAG"
+            git push origin main
+            echo "Homebrew Tap (Beta) updated successfully to $CM_TAG!"
+          fi
     artifacts:
       - dist/*.dmg
     publishing:
@@ -95,10 +138,11 @@ workflows:
       events:
         - tag
       tag_patterns:
-        - pattern: 'v*-beta*'
-          include: false
         - pattern: 'v*'
           include: true
+        - pattern: 'v*-beta*'
+          include: false
+      cancel_previous_builds: true
     scripts:
       - name: Build macOS App Archive
         script: |
@@ -153,6 +197,48 @@ workflows:
               --title "MacMirror macOS $CM_TAG" \
               --generate-notes \
               "$DMG_PATH"
+          fi
+      - name: Update Homebrew Tap (Stable)
+        script: |
+          set -e
+          set -x
+          
+          if [ -z "$CM_TAG" ]; then
+            echo "Not a tag build, skipping Homebrew Tap update"
+            exit 0
+          fi
+          
+          VERSION_NAME="${CM_TAG#v}"
+          DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-$CM_TAG.dmg"
+          DMG_SHA256=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+          
+          echo "Updating Homebrew Tap (Stable) to $VERSION_NAME ($DMG_SHA256)..."
+          
+          TAP_DIR="$CM_BUILD_DIR/homebrew-tap"
+          rm -rf "$TAP_DIR"
+          git clone "https://x-access-token:$GITHUB_TOKEN@github.com/angelvelasquezdev/homebrew-tap.git" "$TAP_DIR"
+          
+          cd "$TAP_DIR"
+          CASK_FILE="Casks/macmirror.rb"
+          
+          if [ ! -f "$CASK_FILE" ]; then
+            echo "Error: $CASK_FILE does not exist in tap repository!"
+            exit 1
+          fi
+          
+          sed -i '' -e "s/version \".*\"/version \"$VERSION_NAME\"/" "$CASK_FILE"
+          sed -i '' -e "s/sha256 \".*\"/sha256 \"$DMG_SHA256\"/" "$CASK_FILE"
+          
+          git config user.name "Codemagic CI"
+          git config user.email "ci@codemagic.io"
+          
+          if git diff --quiet; then
+            echo "No changes detected in $CASK_FILE"
+          else
+            git add "$CASK_FILE"
+            git commit -m "chore(cask): update macmirror to $CM_TAG"
+            git push origin main
+            echo "Homebrew Tap (Stable) updated successfully to $CM_TAG!"
           fi
     artifacts:
       - dist/*.dmg
