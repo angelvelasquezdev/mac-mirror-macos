@@ -8,6 +8,8 @@
 "status_connected" = "Connected";
 "status_waiting" = "Waiting";
 
+"menu_about" = "About MacMirror";
+"menu_app_version" = "MacMirror v%@ (%@)";
 "menu_send_test" = "Send Test Notification";
 "menu_unpair" = "Unpair Android Device";
 "menu_quit" = "Quit MacMirror";
