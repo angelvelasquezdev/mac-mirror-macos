@@ -34,3 +34,9 @@
 "permission_warning_desc" = "macOS ha bloqueado las notificaciones para MacMirror. Habilítalas en Ajustes del Sistema para recibir alertas.";
 "permission_warning_button" = "Abrir Ajustes";
 
+"remote_test_requesting" = "Solicitando prueba a Android…";
+"remote_test_success" = "¡Notificación de prueba recibida desde %@ y mostrada!";
+"remote_test_failed_not_connected" = "Android no está conectado. Verifica que tu teléfono tenga Wi-Fi y MacMirror esté abierto.";
+"remote_test_timeout" = "No se recibió respuesta de Android. Comprueba la conexión.";
+"test_notification_from_phone" = "Alerta verificada recibida desde %@";
+
