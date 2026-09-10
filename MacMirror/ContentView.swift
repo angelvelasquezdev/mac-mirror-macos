@@ -32,13 +32,9 @@ struct ContentView: View {
                 isPaired: viewModel.isPaired,
                 isConnected: viewModel.isPaired && viewModel.isClientConnected,
                 onSendTestNotification: {
-                    NotificationManager.shared.showNotification(
-                        id: UUID().uuidString,
-                        appName: NSLocalizedString("app_name", comment: ""),
-                        title: NSLocalizedString("test_notification_title", comment: ""),
-                        text: NSLocalizedString("test_notification_text", comment: ""),
-                        appIconBase64: nil
-                    )
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        viewModel.triggerRemoteTestNotification()
+                    }
                 },
                 onUnpair: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -52,6 +48,10 @@ struct ContentView: View {
             
             Divider()
                 .opacity(0.12)
+
+            if viewModel.remoteTestStatus != .idle {
+                RemoteTestStatusBannerView(status: viewModel.remoteTestStatus)
+            }
 
             if !viewModel.notificationPermissionGranted {
                 NotificationPermissionWarningView()
@@ -90,6 +90,81 @@ struct ContentView: View {
         .background(VisualEffectView(material: .popover, blendingMode: .behindWindow))
         .background(colorScheme == .light ? Color.white.opacity(0.35) : Color.black.opacity(0.2))
         .animation(.spring(response: 0.35, dampingFraction: 0.82), value: viewModel.isPaired)
+    }
+}
+
+// MARK: - Remote Test Status Banner
+
+struct RemoteTestStatusBannerView: View {
+    let status: MenuBarViewModel.RemoteTestStatus
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        HStack(spacing: 8) {
+            switch status {
+            case .idle:
+                EmptyView()
+            case .requesting:
+                ProgressView()
+                    .controlSize(.mini)
+                Text(NSLocalizedString("remote_test_requesting", comment: ""))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.primary)
+            case .success(let msg):
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(colorScheme == .light ? Color(red: 0.11, green: 0.52, blue: 0.20) : Color(nsColor: .systemGreen))
+                    .font(.system(size: 11))
+                Text(msg)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.primary)
+            case .error(let msg):
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                    .font(.system(size: 11))
+                Text(msg)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.primary)
+            }
+            Spacer()
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(backgroundColor)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(borderColor, lineWidth: 0.8)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    private var backgroundColor: Color {
+        switch status {
+        case .requesting:
+            return Color.accentColor.opacity(0.12)
+        case .success:
+            return Color.green.opacity(0.12)
+        case .error:
+            return Color.orange.opacity(0.12)
+        case .idle:
+            return Color.clear
+        }
+    }
+
+    private var borderColor: Color {
+        switch status {
+        case .requesting:
+            return Color.accentColor.opacity(0.25)
+        case .success:
+            return Color.green.opacity(0.25)
+        case .error:
+            return Color.orange.opacity(0.25)
+        case .idle:
+            return Color.clear
+        }
     }
 }
 

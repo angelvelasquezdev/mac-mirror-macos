@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MacMirror",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v14) // Support macOS Sonoma (14) and above
     ],

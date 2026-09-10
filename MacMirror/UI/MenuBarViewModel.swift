@@ -16,6 +16,15 @@ class MenuBarViewModel: ObservableObject {
     @Published var localIP: String = "Unknown"
     @Published var recentNotifications: [NotificationLog] = []
 
+    enum RemoteTestStatus: Equatable {
+        case idle
+        case requesting
+        case success(String)
+        case error(String)
+    }
+
+    @Published var remoteTestStatus: RemoteTestStatus = .idle
+
     private let server = HTTPServer()
     private let wsServer = WebSocketServer()
     private let publisher = BonjourPublisher()
@@ -215,11 +224,16 @@ class MenuBarViewModel: ObservableObject {
                 return (500, Data("{\"error\":\"Internal Server Error\"}".utf8))
             }
             
-            // Process the notification asynchronously on the Main Actor to avoid blocking the HTTP response
-            Task { @MainActor in
-                self.processEncryptedNotification(requestData: requestData)
+            var notificationId: String? = nil
+            if Thread.isMainThread {
+                notificationId = self.processEncryptedNotification(requestData: requestData)
+            } else {
+                DispatchQueue.main.sync {
+                    notificationId = self.processEncryptedNotification(requestData: requestData)
+                }
             }
-            return (200, Data("{\"status\":\"ok\"}".utf8))
+            let idStr = notificationId ?? ""
+            return (200, Data("{\"status\":\"ok\",\"id\":\"\(idStr)\"}".utf8))
         }
 
         // 4. Handle POST /pair/unpair
@@ -276,11 +290,12 @@ class MenuBarViewModel: ObservableObject {
         }
     }
 
-    private func processEncryptedNotification(requestData: Data) {
+    @discardableResult
+    private func processEncryptedNotification(requestData: Data) -> String? {
         guard self.isPaired,
               let keyData = KeychainHelper.shared.retrieveKey() else {
             print("Notification ignored: Device is not paired or symmetric key not found.")
-            return
+            return nil
         }
         
         do {
@@ -289,7 +304,7 @@ class MenuBarViewModel: ObservableObject {
                   let ciphertext = json?["ciphertext"] as? String,
                   let tag = json?["tag"] as? String else {
                 print("Failed to parse notification payload: missing required envelope parameters.")
-                return
+                return nil
             }
             
             let sessionKey = SymmetricKey(data: keyData)
@@ -304,7 +319,7 @@ class MenuBarViewModel: ObservableObject {
             guard let innerData = decryptedText.data(using: .utf8),
                   let innerJson = try JSONSerialization.jsonObject(with: innerData) as? [String: Any] else {
                 print("Failed to decode inner notification content.")
-                return
+                return nil
             }
             
             let id = innerJson["id"] as? String ?? UUID().uuidString
@@ -342,8 +357,54 @@ class MenuBarViewModel: ObservableObject {
                 self.recentNotifications = updated
             }
             
+            // Send WebSocket ACK back to Android
+            let ackJson = "{\"type\":\"ack\",\"id\":\"\(id)\",\"status\":\"ok\"}"
+            self.wsServer.broadcast(message: ackJson)
+
+            // If a remote test was requested, mark it as successful
+            if self.remoteTestStatus == .requesting {
+                let devName = self.pairedDeviceName ?? NSLocalizedString("fallback_android_device", comment: "")
+                self.remoteTestStatus = .success(String(format: NSLocalizedString("remote_test_success", comment: ""), devName))
+                self.autoResetTestStatusAfterDelay()
+            }
+
+            return id
         } catch {
             print("Notification decryption failed: \(error)")
+            return nil
+        }
+    }
+
+    func triggerRemoteTestNotification() {
+        guard isPaired else {
+            remoteTestStatus = .error(NSLocalizedString("remote_test_failed_not_connected", comment: ""))
+            autoResetTestStatusAfterDelay()
+            return
+        }
+        guard isClientConnected else {
+            remoteTestStatus = .error(NSLocalizedString("remote_test_failed_not_connected", comment: ""))
+            autoResetTestStatusAfterDelay()
+            return
+        }
+
+        remoteTestStatus = .requesting
+        wsServer.broadcast(message: "{\"action\":\"trigger_test_notification\"}")
+
+        Task {
+            try? await Task.sleep(nanoseconds: 6_000_000_000)
+            if self.remoteTestStatus == .requesting {
+                self.remoteTestStatus = .error(NSLocalizedString("remote_test_timeout", comment: ""))
+                self.autoResetTestStatusAfterDelay()
+            }
+        }
+    }
+
+    private func autoResetTestStatusAfterDelay() {
+        Task {
+            try? await Task.sleep(nanoseconds: 4_500_000_000)
+            if self.remoteTestStatus != .requesting {
+                self.remoteTestStatus = .idle
+            }
         }
     }
     
