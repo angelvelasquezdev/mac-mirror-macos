@@ -131,11 +131,15 @@ xcodebuild -project MacMirror.xcodeproj -scheme MacMirror -configuration Release
 
 ## 🗺️ Hoja de Ruta (Roadmap)
 
-- [ ] 🔋 Mostrar el porcentaje de batería y estado de carga del dispositivo Android en el popover de la barra de menú.
-- [ ] ⌨️ Atajo de teclado global para abrir/cerrar el popover rápidamente (`Cmd + Shift + M`).
-- [ ] 🗑️ Limpiar el historial completo o descartar notificaciones individuales.
-- [ ] 🌐 Nuevas traducciones (Francés, Alemán, Portugués, Italiano, Japonés).
-- [ ] 💬 Acciones rápidas y descarte de notificaciones en tiempo real.
+- [x] 🗑️ Limpiar el historial completo o descartar notificaciones individuales *(Lanzado en v1.0.0-beta.2)*.
+- [ ] 🔋 Mostrar el porcentaje de batería y estado de carga del dispositivo Android en el popover ([#1](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/1)).
+- [ ] ⌨️ Atajo de teclado global para abrir/cerrar el popover rápidamente ([#2](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/2)).
+- [ ] 💬 Respuestas rápidas (inline reply) y acciones directas en banners de macOS ([#7](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/7)).
+- [ ] 📋 Sincronización segura del portapapeles local bidireccional ([#8](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/8)).
+- [ ] 🎵 Widget multimedia "Now Playing" con controles de reproducción ([#9](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/9)).
+- [ ] 🔍 Búsqueda y filtros por aplicación en el historial ([#10](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/10)).
+- [ ] 🔕 Silenciar notificaciones temporalmente (Snooze 30m / 1h / hasta mañana) ([#11](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/11)).
+- [ ] 🌐 Nuevas traducciones (Francés, Alemán, Portugués, Italiano, Japonés) ([#4](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/4)).
 
 ---
 

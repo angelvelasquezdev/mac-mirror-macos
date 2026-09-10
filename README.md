@@ -131,11 +131,15 @@ xcodebuild -project MacMirror.xcodeproj -scheme MacMirror -configuration Release
 
 ## 🗺️ Roadmap
 
-- [ ] 🔋 Display paired Android device battery percentage & charging indicator in Menu Bar popover.
-- [ ] ⌨️ Global keyboard shortcut to quickly toggle the popover view (`Cmd + Shift + M`).
-- [ ] 🗑️ Clear individual or all notification history entries.
-- [ ] 🌐 Expand localizations (French, German, Portuguese, Italian, Japanese).
-- [ ] 💬 Quick action buttons & inline notification dismissal.
+- [x] 🗑️ Clear individual or all notification history entries *(Shipped in v1.0.0-beta.2)*.
+- [ ] 🔋 Display paired Android device battery percentage & charging indicator in Menu Bar popover ([#1](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/1)).
+- [ ] ⌨️ Global keyboard shortcut to quickly toggle the popover view ([#2](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/2)).
+- [ ] 💬 Actionable notifications & inline quick replies from banners ([#7](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/7)).
+- [ ] 📋 Secure bidirectional local clipboard synchronization ([#8](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/8)).
+- [ ] 🎵 Now Playing media widget with transport controls ([#9](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/9)).
+- [ ] 🔍 Search & app filters in notification history ([#10](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/10)).
+- [ ] 🔕 Snooze and temporary mute notifications toggle ([#11](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/11)).
+- [ ] 🌐 Expand localizations (French, German, Portuguese, Italian, Japanese) ([#4](https://github.com/angelvelasquezdev/mac-mirror-macos/issues/4)).
 
 ---
 
