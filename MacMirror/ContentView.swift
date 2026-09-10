@@ -224,6 +224,23 @@ struct HeaderView: View {
     let onUnpair: () -> Void
     let onQuit: () -> Void
 
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    }
+
+    private var appBuild: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+
+    private func openAboutPanel() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.orderFrontStandardAboutPanel(options: [
+            NSApplication.AboutPanelOptionKey.applicationName: NSLocalizedString("app_name", comment: ""),
+            NSApplication.AboutPanelOptionKey.applicationVersion: appVersion,
+            NSApplication.AboutPanelOptionKey.version: appBuild
+        ])
+    }
+
     var body: some View {
         HStack(spacing: 10) {
             // App Icon / Symbol
@@ -252,6 +269,14 @@ struct HeaderView: View {
             
             // Contextual Actions Menu (Apple style ...)
             Menu {
+                Text(String(format: NSLocalizedString("menu_app_version", comment: ""), appVersion, appBuild))
+
+                Button(action: openAboutPanel) {
+                    Label(NSLocalizedString("menu_about", comment: ""), systemImage: "info.circle")
+                }
+
+                Divider()
+
                 Button(action: onSendTestNotification) {
                     Label(NSLocalizedString("menu_send_test", comment: ""), systemImage: "bell.badge")
                 }
