@@ -53,6 +53,17 @@ struct ContentView: View {
                 RemoteTestStatusBannerView(status: viewModel.remoteTestStatus)
             }
 
+            if let companionVer = viewModel.companionCompatibilityWarning {
+                CompatibilityWarningBannerView(
+                    companionVersion: companionVer,
+                    onDismiss: {
+                        withAnimation {
+                            viewModel.dismissCompatibilityWarning()
+                        }
+                    }
+                )
+            }
+
             if !viewModel.notificationPermissionGranted {
                 NotificationPermissionWarningView()
             }
@@ -211,6 +222,55 @@ struct NotificationPermissionWarningView: View {
         )
         .padding(.horizontal, 14)
         .padding(.top, 8)
+    }
+}
+
+// MARK: - Compatibility Warning Banner
+
+struct CompatibilityWarningBannerView: View {
+    let companionVersion: String
+    var onDismiss: (() -> Void)? = nil
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+                .font(.system(size: 13))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NSLocalizedString("compat_banner_title", comment: ""))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.primary)
+                Text(String(format: NSLocalizedString("compat_banner_desc_android_update", comment: ""), companionVersion))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Button(action: {
+                NSWorkspace.shared.open(CompatibilityManager.androidReleasesUrl)
+            }) {
+                Text(NSLocalizedString("compat_btn_update", comment: ""))
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+            .controlSize(.mini)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.orange.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.orange.opacity(0.25), lineWidth: 0.8)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
 

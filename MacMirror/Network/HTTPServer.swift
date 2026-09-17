@@ -11,7 +11,7 @@ final class HTTPServer: @unchecked Sendable {
     var onConfirmPair: ((Data) -> (statusCode: Int, responseData: Data))?
     var onNotification: ((Data) -> (statusCode: Int, responseData: Data))?
     var onUnpair: ((Data) -> (statusCode: Int, responseData: Data))?
-    var onStatus: (() -> (statusCode: Int, responseData: Data))?
+    var onStatus: (([String: String]) -> (statusCode: Int, responseData: Data))?
 
     func start() throws {
         let portVal = NWEndpoint.Port(rawValue: port)!
@@ -83,13 +83,18 @@ final class HTTPServer: @unchecked Sendable {
                 let method = requestLine[0]
                 let path = requestLine[1]
 
-                // Parse Content-Length header robustly
+                // Parse headers into dictionary
+                var headers: [String: String] = [:]
                 var contentLength = 0
                 for line in lines.dropFirst() {
                     let parts = line.components(separatedBy: ":")
-                    if parts.count >= 2 && parts[0].trimmingCharacters(in: .whitespaces).lowercased() == "content-length" {
-                        let valStr = parts.dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces)
-                        contentLength = Int(valStr) ?? 0
+                    if parts.count >= 2 {
+                        let headerKey = parts[0].trimmingCharacters(in: .whitespaces).lowercased()
+                        let headerVal = parts.dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces)
+                        headers[headerKey] = headerVal
+                        if headerKey == "content-length" {
+                            contentLength = Int(headerVal) ?? 0
+                        }
                     }
                 }
 
@@ -99,7 +104,7 @@ final class HTTPServer: @unchecked Sendable {
                 if bodyDataAvailable >= contentLength {
                     // Extract exactly Content-Length bytes for the payload body
                     let bodyData = newData.subdata(in: bodyStartIndex..<(bodyStartIndex + contentLength))
-                    self.route(connection: connection, method: method, path: path, body: bodyData)
+                    self.route(connection: connection, method: method, path: path, headers: headers, body: bodyData)
                 } else {
                     // Not all body bytes have arrived, keep reading
                     self.readRequest(connection: connection, accumulatedData: newData)
@@ -113,9 +118,9 @@ final class HTTPServer: @unchecked Sendable {
         }
     }
 
-    private func route(connection: NWConnection, method: String, path: String, body: Data) {
+    private func route(connection: NWConnection, method: String, path: String, headers: [String: String], body: Data) {
         if method == "GET" && path == "/status" {
-            let (statusCode, responseData) = onStatus?() ?? (200, Data("{\"status\":\"ok\"}".utf8))
+            let (statusCode, responseData) = onStatus?(headers) ?? (200, Data("{\"status\":\"ok\"}".utf8))
             sendResponse(connection: connection, statusCode: statusCode, bodyData: responseData)
             return
         }

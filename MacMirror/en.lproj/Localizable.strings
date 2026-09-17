@@ -43,3 +43,9 @@
 "remote_test_timeout" = "No response received from Android. Check phone connection.";
 "test_notification_from_phone" = "Verified alert received from %@";
 
+"compat_banner_title" = "Android Update Required";
+"compat_banner_desc_android_update" = "Your Android device is running MacMirror %@, which requires an update to remain compatible with this Mac.";
+"compat_btn_update" = "Update Android App";
+"compat_notification_title" = "MacMirror: Android Update Required";
+"compat_notification_text" = "The paired Android device requires an update to remain compatible.";
+

@@ -24,6 +24,7 @@ class MenuBarViewModel: ObservableObject {
     }
 
     @Published var remoteTestStatus: RemoteTestStatus = .idle
+    @Published var companionCompatibilityWarning: String? = nil
 
     private let server = HTTPServer()
     private let wsServer = WebSocketServer()
@@ -113,6 +114,7 @@ class MenuBarViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.isPaired = false
             self.pairedDeviceName = nil
+            self.companionCompatibilityWarning = nil
             self.recentNotifications.removeAll()
             self.generateNewPin()
         }
@@ -141,6 +143,22 @@ class MenuBarViewModel: ObservableObject {
                 self.clientPublicKeyDer = pubKeyData
                 self.clientDeviceName = deviceName
                 
+                let clientProtocol = json?["protocol_version"] as? Int
+                let clientAppVer = json?["app_version"] as? String
+                let compatResult = CompatibilityManager.checkCompatibility(
+                    peerProtocolVersion: clientProtocol,
+                    peerAppVersion: clientAppVer
+                )
+
+                Task { @MainActor in
+                    if compatResult.requiresCompanionUpdate {
+                        self.companionCompatibilityWarning = compatResult.peerAppVersion
+                        self.showCompatibilityNotification(companionVersion: compatResult.peerAppVersion)
+                    } else {
+                        self.companionCompatibilityWarning = nil
+                    }
+                }
+
                 // Fetch our ephemeral public key
                 guard let myPrivateKey = self.ephemeralPrivateKey else {
                     return (500, Data("{\"error\":\"Pairing session not initialized\"}".utf8))
@@ -150,7 +168,9 @@ class MenuBarViewModel: ObservableObject {
                 
                 let responseJson: [String: Any] = [
                     "server_ephemeral_pub_key": myPubBase64,
-                    "device_name": Host.current().localizedName ?? "MacMirror Server"
+                    "device_name": Host.current().localizedName ?? "MacMirror Server",
+                    "protocol_version": CompatibilityManager.currentProtocolVersion,
+                    "app_version": CompatibilityManager.currentAppVersion
                 ]
                 
                 let responseData = try JSONSerialization.data(withJSONObject: responseJson)
@@ -248,18 +268,54 @@ class MenuBarViewModel: ObservableObject {
         }
 
         // 5. Handle GET /status
-        server.onStatus = { [weak self] in
+        server.onStatus = { [weak self] headers in
             guard let self = self else {
                 return (500, Data("{\"error\":\"Internal Server Error\"}".utf8))
             }
+            
+            let clientProtocol = headers["x-protocol-version"].flatMap { Int($0) }
+            let clientAppVer = headers["x-app-version"]
+            let compatResult = CompatibilityManager.checkCompatibility(
+                peerProtocolVersion: clientProtocol,
+                peerAppVersion: clientAppVer
+            )
+            
             Task { @MainActor in
                 self.lastClientActivity = Date()
+                if compatResult.requiresCompanionUpdate {
+                    if self.companionCompatibilityWarning == nil {
+                        self.showCompatibilityNotification(companionVersion: compatResult.peerAppVersion)
+                    }
+                    self.companionCompatibilityWarning = compatResult.peerAppVersion
+                } else {
+                    self.companionCompatibilityWarning = nil
+                }
             }
             let isCurrentlyPaired = self.isPaired
             let pairedName = self.pairedDeviceName ?? ""
-            let statusJson = "{\"paired\":\(isCurrentlyPaired),\"deviceName\":\"\(pairedName)\"}"
-            return (200, Data(statusJson.utf8))
+            let statusJson: [String: Any] = [
+                "paired": isCurrentlyPaired,
+                "deviceName": pairedName,
+                "protocol_version": CompatibilityManager.currentProtocolVersion,
+                "app_version": CompatibilityManager.currentAppVersion
+            ]
+            let statusData = (try? JSONSerialization.data(withJSONObject: statusJson)) ?? Data("{\"status\":\"ok\"}".utf8)
+            return (200, statusData)
         }
+    }
+
+    func showCompatibilityNotification(companionVersion: String) {
+        NotificationManager.shared.showNotification(
+            id: "macmirror_compat_warning",
+            appName: "MacMirror",
+            title: NSLocalizedString("compat_notification_title", comment: ""),
+            text: String(format: NSLocalizedString("compat_banner_desc_android_update", comment: ""), companionVersion),
+            appIconBase64: nil
+        )
+    }
+
+    func dismissCompatibilityWarning() {
+        self.companionCompatibilityWarning = nil
     }
 
     private func setupWebSocketHandlers() {
