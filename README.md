@@ -79,14 +79,19 @@ Engineered with **SwiftUI** following **Apple Human Interface Guidelines**, it f
 
 ### Via Homebrew (Recommended)
 
-**Stable Channel:**
+**Stable Channel (Recommended):**
 ```bash
 brew install --cask angelvelasquezdev/tap/macmirror
 ```
 
 **Beta Channel:**
 ```bash
-brew install --cask angelvelasquezdev/tap/macmirror-beta
+brew install --cask angelvelasquezdev/tap/macmirror@beta
+```
+
+**Develop Channel (Bleeding-edge):**
+```bash
+brew install --cask angelvelasquezdev/tap/macmirror@dev
 ```
 
 > [!NOTE]
@@ -99,7 +104,8 @@ brew install --cask angelvelasquezdev/tap/macmirror-beta
 To update in the future:
 ```bash
 brew upgrade --cask macmirror       # For stable channel
-brew upgrade --cask macmirror-beta  # For beta channel
+brew upgrade --cask macmirror@beta  # For beta channel
+brew upgrade --cask macmirror@dev   # For dev channel
 ```
 
 ### Manual Download (.dmg)

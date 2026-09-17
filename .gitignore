@@ -31,3 +31,4 @@ DerivedData/
 *.swp
 *~
 AppIcon.jpg
+dist/

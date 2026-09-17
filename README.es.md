@@ -79,14 +79,19 @@ Desarrollada con **SwiftUI** siguiendo las **Pautas de Interfaz Humana de Apple 
 
 ### Mediante Homebrew (Recomendado)
 
-**Canal Estable:**
+**Canal Estable (Recomendado):**
 ```bash
 brew install --cask angelvelasquezdev/tap/macmirror
 ```
 
 **Canal Beta:**
 ```bash
-brew install --cask angelvelasquezdev/tap/macmirror-beta
+brew install --cask angelvelasquezdev/tap/macmirror@beta
+```
+
+**Canal Develop (Bleeding-edge):**
+```bash
+brew install --cask angelvelasquezdev/tap/macmirror@dev
 ```
 
 > [!NOTE]
@@ -99,7 +104,8 @@ brew install --cask angelvelasquezdev/tap/macmirror-beta
 Para actualizar en el futuro:
 ```bash
 brew upgrade --cask macmirror       # Para canal estable
-brew upgrade --cask macmirror-beta  # Para canal beta
+brew upgrade --cask macmirror@beta  # Para canal beta
+brew upgrade --cask macmirror@dev   # Para canal develop
 ```
 
 ### Descarga Manual (.dmg)

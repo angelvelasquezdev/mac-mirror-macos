@@ -93,7 +93,7 @@ workflows:
           git clone "https://x-access-token:$GITHUB_TOKEN@github.com/angelvelasquezdev/homebrew-tap.git" "$TAP_DIR"
           
           cd "$TAP_DIR"
-          CASK_FILE="Casks/macmirror-beta.rb"
+          CASK_FILE="Casks/macmirror@beta.rb"
           
           if [ ! -f "$CASK_FILE" ]; then
             echo "Error: $CASK_FILE does not exist in tap repository!"
@@ -110,7 +110,7 @@ workflows:
             echo "No changes detected in $CASK_FILE"
           else
             git add "$CASK_FILE"
-            git commit -m "chore(cask): update macmirror-beta to $CM_TAG"
+            git commit -m "chore(cask): update macmirror@beta to $CM_TAG"
             git push origin main
             echo "Homebrew Tap (Beta) updated successfully to $CM_TAG!"
           fi
@@ -239,6 +239,126 @@ workflows:
             git commit -m "chore(cask): update macmirror to $CM_TAG"
             git push origin main
             echo "Homebrew Tap (Stable) updated successfully to $CM_TAG!"
+          fi
+    artifacts:
+      - dist/*.dmg
+    publishing:
+      email:
+        recipients:
+          - angelvelasquezdev@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  macos-dev-release:
+    name: macOS Develop Release
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      groups:
+        - github_credentials
+      vars:
+        APP_NAME: "MacMirror"
+        BUNDLE_ID: "com.angelsoft.MacMirrorApp"
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'develop'
+          include: true
+          source: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Build macOS App Archive
+        script: |
+          set -e
+          set -x
+          
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DATE_STR=$(date +%Y%m%d)
+          VERSION_NAME="dev.${DATE_STR}.${SHORT_SHA}"
+          
+          xcodebuild archive \
+            -project "MacMirror.xcodeproj" \
+            -scheme "MacMirror" \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/build/$APP_NAME.xcarchive" \
+            MARKETING_VERSION="$VERSION_NAME" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Create DMG package
+        script: |
+          set -e
+          set -x
+          
+          mkdir -p "$CM_BUILD_DIR/dist"
+          APP_PATH="$CM_BUILD_DIR/build/$APP_NAME.xcarchive/Products/Applications/$APP_NAME.app"
+          
+          codesign --force --deep -s - "$APP_PATH"
+          
+          DMG_NAME="$APP_NAME-dev.dmg"
+          hdiutil create \
+            -volname "$APP_NAME" \
+            -srcfolder "$APP_PATH" \
+            -ov -format UDZO \
+            "$CM_BUILD_DIR/dist/$DMG_NAME"
+      - name: Publish to GitHub Releases (Rolling Dev Release)
+        script: |
+          set -e
+          set -x
+          
+          export GH_TOKEN="$GITHUB_TOKEN"
+          DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-dev.dmg"
+          
+          if gh release view dev >/dev/null 2>&1; then
+            gh release upload dev "$DMG_PATH" --clobber
+          else
+            gh release create dev \
+              --title "MacMirror macOS Develop Channel" \
+              --notes "Rolling pre-release build from develop branch" \
+              --prerelease \
+              "$DMG_PATH"
+          fi
+      - name: Update Homebrew Tap (Dev)
+        script: |
+          set -e
+          set -x
+          
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DATE_STR=$(date +%Y%m%d)
+          VERSION_NAME="dev.${DATE_STR}.${SHORT_SHA}"
+          DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-dev.dmg"
+          DMG_SHA256=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+          
+          echo "Updating Homebrew Tap (Dev) to $VERSION_NAME ($DMG_SHA256)..."
+          
+          TAP_DIR="$CM_BUILD_DIR/homebrew-tap"
+          rm -rf "$TAP_DIR"
+          git clone "https://x-access-token:$GITHUB_TOKEN@github.com/angelvelasquezdev/homebrew-tap.git" "$TAP_DIR"
+          
+          cd "$TAP_DIR"
+          CASK_FILE="Casks/macmirror@dev.rb"
+          
+          if [ ! -f "$CASK_FILE" ]; then
+            echo "Error: $CASK_FILE does not exist in tap repository!"
+            exit 1
+          fi
+          
+          sed -i '' -e "s/version \".*\"/version \"$VERSION_NAME\"/" "$CASK_FILE"
+          sed -i '' -e "s/sha256 \".*\"/sha256 \"$DMG_SHA256\"/" "$CASK_FILE"
+          
+          git config user.name "Codemagic CI"
+          git config user.email "ci@codemagic.io"
+          
+          if git diff --quiet; then
+            echo "No changes detected in $CASK_FILE"
+          else
+            git add "$CASK_FILE"
+            git commit -m "chore(cask): update macmirror@dev to $VERSION_NAME"
+            git push origin main
+            echo "Homebrew Tap (Dev) updated successfully to $VERSION_NAME!"
           fi
     artifacts:
       - dist/*.dmg
