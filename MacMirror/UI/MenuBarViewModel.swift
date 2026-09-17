@@ -254,7 +254,6 @@ class MenuBarViewModel: ObservableObject {
             }
             Task { @MainActor in
                 self.lastClientActivity = Date()
-                self.isClientConnected = true
             }
             let isCurrentlyPaired = self.isPaired
             let pairedName = self.pairedDeviceName ?? ""
@@ -381,8 +380,8 @@ class MenuBarViewModel: ObservableObject {
             autoResetTestStatusAfterDelay()
             return
         }
-        guard isClientConnected else {
-            remoteTestStatus = .error(NSLocalizedString("remote_test_failed_not_connected", comment: ""))
+        guard isClientConnected && wsServer.hasActiveConnections else {
+            remoteTestStatus = .error(NSLocalizedString("remote_test_bridge_offline", comment: ""))
             autoResetTestStatusAfterDelay()
             return
         }

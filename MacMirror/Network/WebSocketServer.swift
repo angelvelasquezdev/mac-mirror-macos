@@ -11,6 +11,14 @@ class WebSocketServer: @unchecked Sendable {
     var onMessageReceived: ((String) -> Void)?
     var onClientCountChanged: ((Int) -> Void)?
 
+    var connectedClientCount: Int {
+        activeConnections.count
+    }
+
+    var hasActiveConnections: Bool {
+        !activeConnections.isEmpty
+    }
+
     init(port: UInt16 = 50002) {
         self.port = NWEndpoint.Port(rawValue: port)!
     }

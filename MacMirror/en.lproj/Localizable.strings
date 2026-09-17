@@ -39,6 +39,7 @@
 "remote_test_requesting" = "Requesting test from Android…";
 "remote_test_success" = "Test notification received from %@ and displayed!";
 "remote_test_failed_not_connected" = "Android is not connected. Ensure your phone has Wi-Fi and MacMirror is running.";
+"remote_test_bridge_offline" = "Notification bridge is disconnected on Android. Open MacMirror on your phone.";
 "remote_test_timeout" = "No response received from Android. Check phone connection.";
 "test_notification_from_phone" = "Verified alert received from %@";
 

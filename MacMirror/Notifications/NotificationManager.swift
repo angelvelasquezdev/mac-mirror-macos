@@ -12,12 +12,19 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
         return dir
     }()
 
+    private var isNotificationCenterAvailable: Bool {
+        Bundle.main.bundleIdentifier != nil
+    }
+
     override init() {
         super.init()
-        UNUserNotificationCenter.current().delegate = self
+        if isNotificationCenterAvailable {
+            UNUserNotificationCenter.current().delegate = self
+        }
     }
 
     func requestPermission() {
+        guard isNotificationCenterAvailable else { return }
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             if granted {
                 print("macOS Notification permission granted.")
@@ -28,6 +35,10 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
     }
 
     func checkAuthorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void) {
+        guard isNotificationCenterAvailable else {
+            completion(.authorized)
+            return
+        }
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             completion(settings.authorizationStatus)
         }
