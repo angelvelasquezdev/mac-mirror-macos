@@ -312,12 +312,14 @@ workflows:
           
           export GH_TOKEN="$GITHUB_TOKEN"
           DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-dev.dmg"
+          COMMIT_SHA=$(git rev-parse HEAD)
           
           if gh release view dev >/dev/null 2>&1; then
             gh release delete dev --yes --cleanup-tag
           fi
 
           gh release create dev \
+            --target "$COMMIT_SHA" \
             --title "MacMirror macOS Develop Channel" \
             --notes "Rolling pre-release build from develop branch" \
             --prerelease \
