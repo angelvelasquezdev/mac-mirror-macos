@@ -320,7 +320,7 @@ workflows:
 
           gh release create dev \
             --target "$COMMIT_SHA" \
-            --title "MacMirror macOS Develop Channel" \
+            --title "dev" \
             --notes "Rolling pre-release build from develop branch" \
             --prerelease \
             "$DMG_PATH"
