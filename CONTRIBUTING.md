@@ -1,5 +1,9 @@
 # Contributing to MacMirror for macOS 🍏
 
+<p align="center">
+  <a href="CONTRIBUTING.md">English</a> • <a href="CONTRIBUTING.es.md">Español</a>
+</p>
+
 Thank you for your interest in contributing to **MacMirror for macOS**! We welcome bug reports, feature proposals, localization contributions, and pull requests.
 
 ---
