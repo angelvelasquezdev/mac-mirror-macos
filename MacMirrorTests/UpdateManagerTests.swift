@@ -137,4 +137,32 @@ struct UpdateManagerTests {
             #expect(detected == "macmirror@dev")
         }
     }
+
+    @Test("Format Homebrew error message per release channel")
+    func testFormatErrorMessage() {
+        let rawLog = """
+        ==> Downloading Homebrew API data
+        ✔ JSON API packages.arm64_golden_gate.jws.json
+        ==> Fetching downloads for: angelvelasquezdev/tap/macmirror@dev
+        ✘ Cask macmirror@dev (dev.20260925.1c1c729)
+        Error: Cask reports different checksum:
+        f88a48f9d70244e392e73df6f3dc79886e471f3df0c4a08bd3b47856cec570de
+        SHA-256 checksum of downloaded file:
+        e58af66f4ff6833d9ec1b020f7f784c3e6613b3d3c777e6f22bb56c79206fef3
+        """
+
+        let stableMessage = UpdateManager.formatErrorMessage(rawOutput: rawLog, channel: .stable)
+        #expect(!stableMessage.contains("==> Downloading"))
+        #expect(!stableMessage.contains("JSON API"))
+        #expect(!stableMessage.contains("f88a48f9"))
+
+        let betaMessage = UpdateManager.formatErrorMessage(rawOutput: rawLog, channel: .beta)
+        #expect(betaMessage == stableMessage)
+
+        let devMessage = UpdateManager.formatErrorMessage(rawOutput: rawLog, channel: .dev)
+        #expect(!devMessage.contains("==> Downloading"))
+        #expect(!devMessage.contains("JSON API"))
+        #expect(devMessage.contains("Error: Cask reports different checksum:"))
+        #expect(devMessage.contains("f88a48f9"))
+    }
 }
