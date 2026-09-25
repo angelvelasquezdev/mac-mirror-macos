@@ -124,6 +124,34 @@ class MenuBarViewModel: ObservableObject {
         self.recentNotifications.removeAll()
     }
 
+    func uninstall() {
+        // 1. Notify connected companion and unpair cleanly
+        unpair(notifyClient: true)
+
+        // 2. Clear UserDefaults for current bundle identifier domain
+        if let bundleID = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: bundleID)
+            UserDefaults.standard.synchronize()
+        }
+
+        // 3. Clear Application Support directory if exists
+        let fileManager = FileManager.default
+        if let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let appDirectory = appSupportURL.appendingPathComponent("MacMirror", isDirectory: true)
+            if fileManager.fileExists(atPath: appDirectory.path) {
+                try? fileManager.removeItem(at: appDirectory)
+            }
+        }
+
+        // 4. Move app bundle to Trash and terminate
+        let bundleURL = Bundle.main.bundleURL
+        NSWorkspace.shared.recycle([bundleURL]) { _, _ in
+            DispatchQueue.main.async {
+                NSApplication.shared.terminate(nil)
+            }
+        }
+    }
+
     private func setupServerHandlers() {
         // 1. Handle POST /pair/initiate
         server.onInitiatePair = { [weak self] requestData in

@@ -49,3 +49,9 @@
 "compat_notification_title" = "MacMirror: Android Update Required";
 "compat_notification_text" = "The paired Android device requires an update to remain compatible.";
 
+"menu_uninstall" = "Uninstall MacMirror…";
+"uninstall_alert_title" = "Uninstall MacMirror?";
+"uninstall_alert_message" = "This will unpair your device, clear all local preferences, and move MacMirror to the Trash.";
+"uninstall_alert_confirm" = "Uninstall";
+"uninstall_alert_cancel" = "Cancel";
+

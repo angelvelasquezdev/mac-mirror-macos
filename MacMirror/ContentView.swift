@@ -41,6 +41,9 @@ struct ContentView: View {
                         viewModel.unpair()
                     }
                 },
+                onUninstall: {
+                    viewModel.uninstall()
+                },
                 onQuit: {
                     NSApplication.shared.terminate(nil)
                 }
@@ -282,6 +285,7 @@ struct HeaderView: View {
     let isConnected: Bool
     let onSendTestNotification: () -> Void
     let onUnpair: () -> Void
+    let onUninstall: () -> Void
     let onQuit: () -> Void
 
     private var appVersion: String {
@@ -299,6 +303,21 @@ struct HeaderView: View {
             NSApplication.AboutPanelOptionKey.applicationVersion: appVersion,
             NSApplication.AboutPanelOptionKey.version: appBuild
         ])
+    }
+
+    private func promptUninstall() {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("uninstall_alert_title", comment: "")
+        alert.informativeText = NSLocalizedString("uninstall_alert_message", comment: "")
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: NSLocalizedString("uninstall_alert_confirm", comment: ""))
+        alert.addButton(withTitle: NSLocalizedString("uninstall_alert_cancel", comment: ""))
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            onUninstall()
+        }
     }
 
     var body: some View {
@@ -349,6 +368,12 @@ struct HeaderView: View {
                     }
                     Divider()
                 }
+
+                Button(role: .destructive, action: promptUninstall) {
+                    Label(NSLocalizedString("menu_uninstall", comment: ""), systemImage: "trash")
+                }
+
+                Divider()
                 
                 Button(action: onQuit) {
                     Label(NSLocalizedString("menu_quit", comment: ""), systemImage: "power")

@@ -49,3 +49,9 @@
 "compat_notification_title" = "MacMirror: Actualización requerida en Android";
 "compat_notification_text" = "El teléfono Android vinculado requiere actualizarse para mantener la compatibilidad.";
 
+"menu_uninstall" = "Desinstalar MacMirror…";
+"uninstall_alert_title" = "¿Desinstalar MacMirror?";
+"uninstall_alert_message" = "Esto desvinculará tu dispositivo, eliminará todas las preferencias locales y moverá MacMirror a la Papelera.";
+"uninstall_alert_confirm" = "Desinstalar";
+"uninstall_alert_cancel" = "Cancelar";
+
