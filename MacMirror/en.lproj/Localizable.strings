@@ -49,3 +49,41 @@
 "compat_notification_title" = "MacMirror: Android Update Required";
 "compat_notification_text" = "The paired Android device requires an update to remain compatible.";
 
+"menu_uninstall" = "Uninstall MacMirror…";
+"uninstall_alert_title" = "Uninstall MacMirror?";
+"uninstall_alert_message" = "This will unpair your device, clear all local preferences, and move MacMirror to the Trash.";
+"uninstall_alert_confirm" = "Uninstall";
+"uninstall_alert_cancel" = "Cancel";
+
+"menu_check_updates" = "Check for Updates…";
+"update_banner_title" = "Update Available";
+"update_banner_desc" = "MacMirror %@ is available (current: %@).";
+"update_btn_upgrade" = "Update Now";
+"update_btn_dismiss" = "Dismiss";
+"update_btn_open_releases" = "Open Releases Page";
+
+"update_alert_uptodate_title" = "You're Up to Date";
+"update_alert_uptodate_desc" = "MacMirror %@ is currently the newest version available.";
+"update_alert_uptodate_ok" = "OK";
+
+"update_alert_available_title" = "Update Available";
+"update_alert_available_desc" = "A new version of MacMirror (%@) is available. Would you like to update now via Homebrew?";
+"update_alert_available_desc_no_brew" = "A new version of MacMirror (%@) is available. Homebrew was not detected on your system. Would you like to download the DMG from GitHub?";
+"update_alert_confirm_brew" = "Update via Homebrew";
+"update_alert_download_dmg" = "Download DMG";
+"update_alert_cancel" = "Cancel";
+
+"update_alert_check_error_title" = "Check for Updates Failed";
+"update_alert_check_error_desc" = "Unable to check for updates: %@. You can check releases on GitHub.";
+
+"update_progress_title" = "Updating MacMirror…";
+"update_progress_desc" = "Running Homebrew upgrade in background. MacMirror will relaunch automatically when done.";
+
+"update_error_title" = "Update Failed";
+"update_error_no_brew" = "Homebrew is not installed on this system. You can download the latest DMG release directly.";
+"update_error_desc" = "Failed to update via Homebrew: %@. You can download the latest release manually.";
+
+"update_notification_title" = "MacMirror Update Available";
+"update_notification_body" = "MacMirror %@ is now available. Click to update.";
+
+

@@ -31,6 +31,10 @@ struct ContentView: View {
                 localIP: viewModel.localIP,
                 isPaired: viewModel.isPaired,
                 isConnected: viewModel.isPaired && viewModel.isClientConnected,
+                isCheckingForUpdates: viewModel.isCheckingForUpdates,
+                onCheckForUpdates: {
+                    viewModel.checkForUpdates(manual: true)
+                },
                 onSendTestNotification: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         viewModel.triggerRemoteTestNotification()
@@ -40,6 +44,9 @@ struct ContentView: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         viewModel.unpair()
                     }
+                },
+                onUninstall: {
+                    viewModel.uninstall()
                 },
                 onQuit: {
                     NSApplication.shared.terminate(nil)
@@ -51,6 +58,22 @@ struct ContentView: View {
 
             if viewModel.remoteTestStatus != .idle {
                 RemoteTestStatusBannerView(status: viewModel.remoteTestStatus)
+            }
+
+            if viewModel.isUpgradingWithBrew {
+                UpdateProgressBannerView(message: viewModel.brewUpgradeStatusMessage)
+            } else if let update = viewModel.availableUpdate {
+                UpdateAvailableBannerView(
+                    update: update,
+                    onUpdate: {
+                        viewModel.promptOrStartUpgrade()
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            viewModel.dismissUpdateBanner()
+                        }
+                    }
+                )
             }
 
             if let companionVer = viewModel.companionCompatibilityWarning {
@@ -274,14 +297,109 @@ struct CompatibilityWarningBannerView: View {
     }
 }
 
+// MARK: - Update Available Banner
+
+struct UpdateAvailableBannerView: View {
+    let update: UpdateInfo
+    let onUpdate: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.down.circle.fill")
+                .foregroundColor(.accentColor)
+                .font(.system(size: 14))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NSLocalizedString("update_banner_title", comment: ""))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.primary)
+                Text(String(format: NSLocalizedString("update_banner_desc", comment: ""), update.availableVersion, update.currentVersion))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Button(action: onUpdate) {
+                Text(NSLocalizedString("update_btn_upgrade", comment: ""))
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.mini)
+
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 8, weight: .semibold))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 2)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.accentColor.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.accentColor.opacity(0.25), lineWidth: 0.8)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+}
+
+// MARK: - Update Progress Banner
+
+struct UpdateProgressBannerView: View {
+    let message: String?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .controlSize(.mini)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NSLocalizedString("update_progress_title", comment: ""))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.primary)
+                Text(NSLocalizedString("update_progress_desc", comment: ""))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.accentColor.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.accentColor.opacity(0.25), lineWidth: 0.8)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+}
+
 // MARK: - Header View (Control Center Inspired)
 
 struct HeaderView: View {
     let localIP: String
     let isPaired: Bool
     let isConnected: Bool
+    let isCheckingForUpdates: Bool
+    let onCheckForUpdates: () -> Void
     let onSendTestNotification: () -> Void
     let onUnpair: () -> Void
+    let onUninstall: () -> Void
     let onQuit: () -> Void
 
     private var appVersion: String {
@@ -299,6 +417,21 @@ struct HeaderView: View {
             NSApplication.AboutPanelOptionKey.applicationVersion: appVersion,
             NSApplication.AboutPanelOptionKey.version: appBuild
         ])
+    }
+
+    private func promptUninstall() {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("uninstall_alert_title", comment: "")
+        alert.informativeText = NSLocalizedString("uninstall_alert_message", comment: "")
+        alert.alertStyle = .critical
+        alert.addButton(withTitle: NSLocalizedString("uninstall_alert_confirm", comment: ""))
+        alert.addButton(withTitle: NSLocalizedString("uninstall_alert_cancel", comment: ""))
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            onUninstall()
+        }
     }
 
     var body: some View {
@@ -335,6 +468,11 @@ struct HeaderView: View {
                     Label(NSLocalizedString("menu_about", comment: ""), systemImage: "info.circle")
                 }
 
+                Button(action: onCheckForUpdates) {
+                    Label(NSLocalizedString("menu_check_updates", comment: ""), systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(isCheckingForUpdates)
+
                 Divider()
 
                 Button(action: onSendTestNotification) {
@@ -349,6 +487,12 @@ struct HeaderView: View {
                     }
                     Divider()
                 }
+
+                Button(role: .destructive, action: promptUninstall) {
+                    Label(NSLocalizedString("menu_uninstall", comment: ""), systemImage: "trash")
+                }
+
+                Divider()
                 
                 Button(action: onQuit) {
                     Label(NSLocalizedString("menu_quit", comment: ""), systemImage: "power")

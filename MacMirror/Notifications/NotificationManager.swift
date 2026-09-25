@@ -1,6 +1,7 @@
 import Foundation
 import UserNotifications
 import Intents
+import AppKit
 
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     static let shared = NotificationManager()
@@ -34,7 +35,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
         }
     }
 
-    func checkAuthorizationStatus(completion: @escaping (UNAuthorizationStatus) -> Void) {
+    func checkAuthorizationStatus(completion: @escaping @Sendable (UNAuthorizationStatus) -> Void) {
         guard isNotificationCenterAvailable else {
             completion(.authorized)
             return
@@ -121,18 +122,29 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, @un
         completionHandler([.banner, .sound])
     }
 
-    // Handle notification click: Dismiss the notification immediately and prevent app window activation
+    // Handle notification click: Dismiss notification or dispatch actions
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let identifier = response.notification.request.identifier
-        print("UNUserNotificationCenterDelegate: Notification clicked (\(identifier)). Dismissing and discarding.")
+        print("UNUserNotificationCenterDelegate: Notification clicked (\(identifier)).")
         
         // Remove it from the notification center list
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [identifier])
         
+        if identifier.hasPrefix("macmirror-update-") {
+            DispatchQueue.main.async {
+                NSApp.activate(ignoringOtherApps: true)
+                NotificationCenter.default.post(name: .macMirrorUpdateNotificationClicked, object: nil)
+            }
+        }
+
         completionHandler()
     }
+}
+
+public extension Notification.Name {
+    static let macMirrorUpdateNotificationClicked = Notification.Name("macMirrorUpdateNotificationClicked")
 }
