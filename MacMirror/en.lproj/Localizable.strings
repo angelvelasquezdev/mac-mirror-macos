@@ -82,6 +82,8 @@
 "update_error_title" = "Update Failed";
 "update_error_no_brew" = "Homebrew is not installed on this system. You can download the latest DMG release directly.";
 "update_error_desc" = "Failed to update via Homebrew: %@. You can download the latest release manually.";
+"update_error_user_friendly" = "An error occurred while updating MacMirror via Homebrew. You can download and install the new version manually from GitHub.";
+"update_error_dev_desc" = "Failed to update via Homebrew.\n\nTechnical details:\n%@\n\nYou can download the latest release manually.";
 
 "update_notification_title" = "MacMirror Update Available";
 "update_notification_body" = "MacMirror %@ is now available. Click to update.";

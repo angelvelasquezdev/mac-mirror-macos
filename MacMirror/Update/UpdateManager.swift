@@ -214,7 +214,7 @@ public final class UpdateManager: ObservableObject {
         if a.isEmpty || c.isEmpty { return false }
         if a == c { return false }
 
-        // Dev channel handling (e.g. dev.20260925.abc vs dev.20260924.xyz)
+        // Dev channel handling (e.g. dev.202609251830.abc vs dev.20260925.xyz)
         if a.hasPrefix("dev.") && c.hasPrefix("dev.") {
             let aComponents = a.split(separator: ".")
             let cComponents = c.split(separator: ".")
@@ -222,13 +222,15 @@ public final class UpdateManager: ObservableObject {
                 let aDate = String(aComponents[1])
                 let cDate = String(cComponents[1])
                 if aDate != cDate {
+                    if let aNum = UInt64(aDate), let cNum = UInt64(cDate) {
+                        return aNum > cNum
+                    }
                     return aDate > cDate
                 }
-                if aComponents.count >= 3 && cComponents.count >= 3 {
-                    return String(aComponents[2]) > String(cComponents[2])
-                }
+                // Same date/timestamp: any different build or commit SHA is considered a newer update in dev channel
+                return a != c
             }
-            return a > c
+            return a != c
         }
 
         // Standard semver with optional pre-release (e.g. 1.0.2 vs 1.0.1 or 1.0.2-beta.2 vs 1.0.2-beta.1)
@@ -363,6 +365,89 @@ public final class UpdateManager: ObservableObject {
 
     // MARK: - Upgrading via Homebrew
 
+    /// Ensures the tap repository is up-to-date before upgrading so local Cask checksums match remote
+    nonisolated public static func synchronizeTapIfNeeded(brewPath: String) {
+        let fm = FileManager.default
+        let candidateTapDirs = [
+            "/opt/homebrew/Library/Taps/angelvelasquezdev/homebrew-tap",
+            "/usr/local/Homebrew/Library/Taps/angelvelasquezdev/homebrew-tap",
+            "/usr/local/Library/Taps/angelvelasquezdev/homebrew-tap"
+        ]
+
+        var tapDir: String? = candidateTapDirs.first(where: {
+            fm.fileExists(atPath: ($0 as NSString).appendingPathComponent(".git"))
+        })
+
+        if tapDir == nil {
+            let proc = Process()
+            proc.executableURL = URL(fileURLWithPath: brewPath)
+            proc.arguments = ["--repo", "angelvelasquezdev/tap"]
+            let pipe = Pipe()
+            proc.standardOutput = pipe
+            try? proc.run()
+            proc.waitUntilExit()
+            if proc.terminationStatus == 0 {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let path = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                   fm.fileExists(atPath: (path as NSString).appendingPathComponent(".git")) {
+                    tapDir = path
+                }
+            }
+        }
+
+        guard let resolvedTapDir = tapDir else { return }
+
+        let gitCandidates = ["/usr/bin/git", "/opt/homebrew/bin/git", "/usr/local/bin/git"]
+        guard let gitPath = gitCandidates.first(where: { fm.isExecutableFile(atPath: $0) }) else { return }
+
+        let pullProcess = Process()
+        pullProcess.executableURL = URL(fileURLWithPath: gitPath)
+        pullProcess.arguments = ["-C", resolvedTapDir, "pull", "--ff-only", "-q"]
+        try? pullProcess.run()
+        pullProcess.waitUntilExit()
+    }
+
+    nonisolated private static var resourceBundle: Bundle {
+        #if SWIFT_PACKAGE
+        return Bundle.module
+        #else
+        return Bundle.main
+        #endif
+    }
+
+    /// Formats Homebrew execution errors appropriately per release channel (clean for stable/beta, concise diagnostic for dev)
+    nonisolated public static func formatErrorMessage(rawOutput: String, channel: ReleaseChannel) -> String {
+        switch channel {
+        case .stable, .beta:
+            return resourceBundle.localizedString(forKey: "update_error_user_friendly", value: nil, table: nil)
+        case .dev:
+            let lines = rawOutput.components(separatedBy: .newlines)
+            let filtered = lines.filter { line in
+                let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmed.isEmpty { return false }
+                if trimmed.hasPrefix("==>") || trimmed.hasPrefix("✔") { return false }
+                return true
+            }
+
+            var deduped: [String] = []
+            for line in filtered {
+                if deduped.last != line {
+                    deduped.append(line)
+                }
+            }
+
+            let meaningfulText: String
+            if deduped.isEmpty {
+                meaningfulText = rawOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+            } else {
+                meaningfulText = deduped.prefix(6).joined(separator: "\n")
+            }
+
+            let format = resourceBundle.localizedString(forKey: "update_error_dev_desc", value: nil, table: nil)
+            return String(format: format, meaningfulText)
+        }
+    }
+
     public func upgradeViaHomebrew(caskName: String? = nil) async -> UpgradeExecutionResult {
         guard let brewPath = Self.findBrewExecutablePath() else {
             return .homebrewNotFound
@@ -374,6 +459,9 @@ public final class UpdateManager: ObservableObject {
         upgradeStatusMessage = NSLocalizedString("update_progress_title", comment: "")
 
         let result = await Task.detached { () -> UpgradeExecutionResult in
+            // Pull the latest tap changes to prevent checksum mismatches on rolling casks
+            Self.synchronizeTapIfNeeded(brewPath: brewPath)
+
             let process = Process()
             process.executableURL = URL(fileURLWithPath: brewPath)
             process.arguments = ["upgrade", "--cask", targetCask]

@@ -494,8 +494,8 @@ class MenuBarViewModel: ObservableObject {
             case .commandFailed(_, let output):
                 let alert = NSAlert()
                 alert.messageText = NSLocalizedString("update_error_title", comment: "")
-                let displayError = output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unknown error" : output
-                alert.informativeText = String(format: NSLocalizedString("update_error_desc", comment: ""), displayError)
+                let channel = self.availableUpdate?.channel ?? ReleaseChannel.channel(for: self.updateManager.currentVersion)
+                alert.informativeText = UpdateManager.formatErrorMessage(rawOutput: output, channel: channel)
                 alert.alertStyle = .warning
                 alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
                 alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))

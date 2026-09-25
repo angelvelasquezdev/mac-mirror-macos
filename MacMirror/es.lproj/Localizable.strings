@@ -82,6 +82,8 @@
 "update_error_title" = "Error al actualizar";
 "update_error_no_brew" = "Homebrew no está instalado en este equipo. Puedes descargar la versión DMG directamente.";
 "update_error_desc" = "No se pudo completar la actualización con Homebrew: %@. Puedes descargar la nueva versión manualmente.";
+"update_error_user_friendly" = "Ocurrió un error al actualizar MacMirror mediante Homebrew. Puedes descargar e instalar la nueva versión manualmente desde GitHub.";
+"update_error_dev_desc" = "No se pudo completar la actualización con Homebrew.\n\nDetalles técnicos:\n%@\n\nPuedes descargar la nueva versión manualmente.";
 
 "update_notification_title" = "Actualización disponible en MacMirror";
 "update_notification_body" = "MacMirror %@ está disponible. Haz clic para actualizar.";
