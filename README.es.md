@@ -41,6 +41,10 @@ Desarrollada con **SwiftUI** siguiendo las **Pautas de Interfaz Humana de Apple 
   - Descifrado de datos con AES-256-GCM al recibir el flujo de eventos.
 - ⚡ **100% Local y Privado**: Servidor HTTP integrado (`:50001`) y servidor WebSocket (`:50002`). Publicación de servicio mediante **Bonjour / mDNS** (`_macmirror._tcp`) para detección automática sin configuración previa. Sin servidores de terceros ni cuentas externas.
 - 🛡 **Almacenamiento Silencioso y Seguro**: Las claves de sesión se almacenan en el directorio privado de la aplicación (`~/Library/Application Support/MacMirror/`) con permisos estrictos POSIX `0600`, evitando los molestos cuadros de diálogo de contraseña del Keychain durante el desarrollo y actualización de la app.
+- 🔄 **Comprobador de Actualizaciones Integrado**: Verificación periódica en segundo plano (cada 24 horas) y manual ("Buscar actualizaciones…") en la barra de menú, con actualización en un clic para canales Estable, Beta y Develop vía Homebrew Cask o GitHub Releases.
+- 🗑 **Desinstalación Limpia desde la App**: Opción integrada "Desinstalar MacMirror…" que desvincula el dispositivo, elimina claves de sesión y preferencias locales (`UserDefaults` y `~/Library/Application Support/MacMirror`), y desinstala la aplicación mediante Homebrew Cask o la Papelera.
+- 🧪 **Diagnóstico Bidireccional y Emisión de ACK**: Envío de alertas de prueba desde el Mac y emisión de recibos de entrega (ACK) inmediatos hacia Android con cálculo de latencia de ida y vuelta.
+- 🤝 **Negociación de Protocolo y Compatibilidad**: Verificación automática de versiones compatibles (`PROTOCOL_VERSION`) con banners informativos y alertas del sistema si el cliente Android emparejado requiere actualización.
 - 🔄 **Desvinculación Bidireccional**: Al pulsar "Desvincular" en macOS, se desconecta inmediatamente el cliente Android y se genera un nuevo PIN.
 - 🌐 **Internacionalización Completa (i18n)**: Soporte nativo para Español e Inglés.
 
@@ -108,6 +112,9 @@ brew upgrade --cask macmirror@beta  # Para canal beta
 brew upgrade --cask macmirror@dev   # Para canal develop
 ```
 
+> [!TIP]
+> Una vez instalada, también puedes buscar e instalar actualizaciones directamente desde la barra de menú mediante **Buscar actualizaciones…**, sin necesidad de recurrir a la terminal.
+
 ### Descarga Manual (.dmg)
 Descarga la última imagen de disco desde la página de [Releases](https://github.com/angelvelasquezdev/mac-mirror-macos/releases), abre `MacMirror-vX.Y.Z.dmg` y arrastra `MacMirror.app` a tu carpeta `/Applications`. Si macOS muestra una advertencia al abrirla, ejecuta `xattr -cr /Applications/MacMirror.app` o permítela en **Ajustes del Sistema** → **Privacidad y Seguridad** → **Abrir de todos modos**.
 
@@ -155,6 +162,7 @@ xcodebuild -project MacMirror.xcodeproj -scheme MacMirror -configuration Release
 
 1. Revisa las issues abiertas etiquetadas con [`good first issue`](https://github.com/angelvelasquezdev/mac-mirror-macos/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) y [`help wanted`](https://github.com/angelvelasquezdev/mac-mirror-macos/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22).
 2. Consulta la [Guía de Contribución](CONTRIBUTING.es.md) para conocer el entorno de desarrollo, estilo de código y flujo de Pull Requests.
+3. Consulta la [Guía de Configuración de Codemagic](CODEMAGIC_SETUP_GUIDE.es.md) para detalles sobre automatización de CI/CD, firmado de código, publicación en Homebrew Tap y flujos de despliegue.
 
 ---
 
