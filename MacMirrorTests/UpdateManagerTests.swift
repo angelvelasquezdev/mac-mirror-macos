@@ -82,10 +82,22 @@ struct UpdateManagerTests {
 
     @Test("Semantic version comparison for develop rolling builds")
     func testSemanticVersionComparisonDev() {
+        // Date transitions
         #expect(UpdateManager.isVersion("dev.20260925.100", newerThan: "dev.20260924.900") == true)
         #expect(UpdateManager.isVersion("dev.20260924.100", newerThan: "dev.20260925.900") == false)
-        #expect(UpdateManager.isVersion("dev.20260925.200", newerThan: "dev.20260925.100") == true)
+
+        // Same date with different commit SHAs (real-world scenario)
+        #expect(UpdateManager.isVersion("dev.20260925.1c1c729", newerThan: "dev.20260925.dbd0b4d") == true)
+        #expect(UpdateManager.isVersion("dev.20260925.dbd0b4d", newerThan: "dev.20260925.1c1c729") == true)
+
+        // Timestamped dev versions (YYYYMMDDHHmm)
+        #expect(UpdateManager.isVersion("dev.202609251830.1c1c729", newerThan: "dev.20260925.dbd0b4d") == true)
+        #expect(UpdateManager.isVersion("dev.202609251835.abc1234", newerThan: "dev.202609251830.def5678") == true)
+        #expect(UpdateManager.isVersion("dev.202609251830.def5678", newerThan: "dev.202609251835.abc1234") == false)
+
+        // Identical versions
         #expect(UpdateManager.isVersion("dev.20260925.100", newerThan: "dev.20260925.100") == false)
+        #expect(UpdateManager.isVersion("dev.202609251830.1c1c729", newerThan: "dev.202609251830.1c1c729") == false)
     }
 
     @Test("Fallback release URLs per channel")

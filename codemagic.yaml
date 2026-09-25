@@ -275,8 +275,9 @@ workflows:
           set -x
           
           SHORT_SHA=$(git rev-parse --short HEAD)
-          DATE_STR=$(date +%Y%m%d)
+          DATE_STR=$(date +%Y%m%d%H%M)
           VERSION_NAME="dev.${DATE_STR}.${SHORT_SHA}"
+          echo "$VERSION_NAME" > "$CM_BUILD_DIR/version.txt"
           
           xcodebuild archive \
             -project "MacMirror.xcodeproj" \
@@ -313,22 +314,26 @@ workflows:
           DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-dev.dmg"
           
           if gh release view dev >/dev/null 2>&1; then
-            gh release upload dev "$DMG_PATH" --clobber
-          else
-            gh release create dev \
-              --title "MacMirror macOS Develop Channel" \
-              --notes "Rolling pre-release build from develop branch" \
-              --prerelease \
-              "$DMG_PATH"
+            gh release delete dev --yes --cleanup-tag
           fi
+
+          gh release create dev \
+            --title "MacMirror macOS Develop Channel" \
+            --notes "Rolling pre-release build from develop branch" \
+            --prerelease \
+            "$DMG_PATH"
       - name: Update Homebrew Tap (Dev)
         script: |
           set -e
           set -x
           
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          DATE_STR=$(date +%Y%m%d)
-          VERSION_NAME="dev.${DATE_STR}.${SHORT_SHA}"
+          if [ -f "$CM_BUILD_DIR/version.txt" ]; then
+            VERSION_NAME=$(cat "$CM_BUILD_DIR/version.txt")
+          else
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            DATE_STR=$(date +%Y%m%d%H%M)
+            VERSION_NAME="dev.${DATE_STR}.${SHORT_SHA}"
+          fi
           DMG_PATH="$CM_BUILD_DIR/dist/$APP_NAME-dev.dmg"
           DMG_SHA256=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
           

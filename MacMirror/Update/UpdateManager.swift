@@ -214,7 +214,7 @@ public final class UpdateManager: ObservableObject {
         if a.isEmpty || c.isEmpty { return false }
         if a == c { return false }
 
-        // Dev channel handling (e.g. dev.20260925.abc vs dev.20260924.xyz)
+        // Dev channel handling (e.g. dev.202609251830.abc vs dev.20260925.xyz)
         if a.hasPrefix("dev.") && c.hasPrefix("dev.") {
             let aComponents = a.split(separator: ".")
             let cComponents = c.split(separator: ".")
@@ -222,13 +222,15 @@ public final class UpdateManager: ObservableObject {
                 let aDate = String(aComponents[1])
                 let cDate = String(cComponents[1])
                 if aDate != cDate {
+                    if let aNum = UInt64(aDate), let cNum = UInt64(cDate) {
+                        return aNum > cNum
+                    }
                     return aDate > cDate
                 }
-                if aComponents.count >= 3 && cComponents.count >= 3 {
-                    return String(aComponents[2]) > String(cComponents[2])
-                }
+                // Same date/timestamp: any different build or commit SHA is considered a newer update in dev channel
+                return a != c
             }
-            return a > c
+            return a != c
         }
 
         // Standard semver with optional pre-release (e.g. 1.0.2 vs 1.0.1 or 1.0.2-beta.2 vs 1.0.2-beta.1)
