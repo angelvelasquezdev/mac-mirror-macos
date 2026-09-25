@@ -31,6 +31,10 @@ struct ContentView: View {
                 localIP: viewModel.localIP,
                 isPaired: viewModel.isPaired,
                 isConnected: viewModel.isPaired && viewModel.isClientConnected,
+                isCheckingForUpdates: viewModel.isCheckingForUpdates,
+                onCheckForUpdates: {
+                    viewModel.checkForUpdates(manual: true)
+                },
                 onSendTestNotification: {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                         viewModel.triggerRemoteTestNotification()
@@ -54,6 +58,22 @@ struct ContentView: View {
 
             if viewModel.remoteTestStatus != .idle {
                 RemoteTestStatusBannerView(status: viewModel.remoteTestStatus)
+            }
+
+            if viewModel.isUpgradingWithBrew {
+                UpdateProgressBannerView(message: viewModel.brewUpgradeStatusMessage)
+            } else if let update = viewModel.availableUpdate {
+                UpdateAvailableBannerView(
+                    update: update,
+                    onUpdate: {
+                        viewModel.promptOrStartUpgrade()
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            viewModel.dismissUpdateBanner()
+                        }
+                    }
+                )
             }
 
             if let companionVer = viewModel.companionCompatibilityWarning {
@@ -277,12 +297,106 @@ struct CompatibilityWarningBannerView: View {
     }
 }
 
+// MARK: - Update Available Banner
+
+struct UpdateAvailableBannerView: View {
+    let update: UpdateInfo
+    let onUpdate: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "arrow.down.circle.fill")
+                .foregroundColor(.accentColor)
+                .font(.system(size: 14))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NSLocalizedString("update_banner_title", comment: ""))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.primary)
+                Text(String(format: NSLocalizedString("update_banner_desc", comment: ""), update.availableVersion, update.currentVersion))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+
+            Button(action: onUpdate) {
+                Text(NSLocalizedString("update_btn_upgrade", comment: ""))
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.mini)
+
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 8, weight: .semibold))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 2)
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.accentColor.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.accentColor.opacity(0.25), lineWidth: 0.8)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+}
+
+// MARK: - Update Progress Banner
+
+struct UpdateProgressBannerView: View {
+    let message: String?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ProgressView()
+                .controlSize(.mini)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(NSLocalizedString("update_progress_title", comment: ""))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.primary)
+                Text(NSLocalizedString("update_progress_desc", comment: ""))
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.accentColor.opacity(0.12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color.accentColor.opacity(0.25), lineWidth: 0.8)
+        )
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+}
+
 // MARK: - Header View (Control Center Inspired)
 
 struct HeaderView: View {
     let localIP: String
     let isPaired: Bool
     let isConnected: Bool
+    let isCheckingForUpdates: Bool
+    let onCheckForUpdates: () -> Void
     let onSendTestNotification: () -> Void
     let onUnpair: () -> Void
     let onUninstall: () -> Void
@@ -353,6 +467,11 @@ struct HeaderView: View {
                 Button(action: openAboutPanel) {
                     Label(NSLocalizedString("menu_about", comment: ""), systemImage: "info.circle")
                 }
+
+                Button(action: onCheckForUpdates) {
+                    Label(NSLocalizedString("menu_check_updates", comment: ""), systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(isCheckingForUpdates)
 
                 Divider()
 

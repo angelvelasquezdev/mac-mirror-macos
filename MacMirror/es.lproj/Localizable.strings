@@ -55,3 +55,35 @@
 "uninstall_alert_confirm" = "Desinstalar";
 "uninstall_alert_cancel" = "Cancelar";
 
+"menu_check_updates" = "Buscar actualizaciones…";
+"update_banner_title" = "Actualización disponible";
+"update_banner_desc" = "MacMirror %@ ya está disponible (actual: %@).";
+"update_btn_upgrade" = "Actualizar ahora";
+"update_btn_dismiss" = "Más tarde";
+"update_btn_open_releases" = "Abrir página de descargas";
+
+"update_alert_uptodate_title" = "Tienes la versión más reciente";
+"update_alert_uptodate_desc" = "MacMirror %@ es actualmente la versión más reciente disponible.";
+"update_alert_uptodate_ok" = "Aceptar";
+
+"update_alert_available_title" = "Actualización disponible";
+"update_alert_available_desc" = "Hay una nueva versión de MacMirror (%@) disponible. ¿Deseas actualizar ahora mediante Homebrew?";
+"update_alert_available_desc_no_brew" = "Hay una nueva versión de MacMirror (%@) disponible. No se detectó Homebrew en tu Mac. ¿Deseas descargar el archivo DMG desde GitHub?";
+"update_alert_confirm_brew" = "Actualizar con Homebrew";
+"update_alert_download_dmg" = "Descargar DMG";
+"update_alert_cancel" = "Cancelar";
+
+"update_alert_check_error_title" = "Error al buscar actualizaciones";
+"update_alert_check_error_desc" = "No se pudo verificar si hay actualizaciones: %@. Puedes consultar las versiones en GitHub.";
+
+"update_progress_title" = "Actualizando MacMirror…";
+"update_progress_desc" = "Ejecutando actualización de Homebrew en segundo plano. MacMirror se reiniciará automáticamente al terminar.";
+
+"update_error_title" = "Error al actualizar";
+"update_error_no_brew" = "Homebrew no está instalado en este equipo. Puedes descargar la versión DMG directamente.";
+"update_error_desc" = "No se pudo completar la actualización con Homebrew: %@. Puedes descargar la nueva versión manualmente.";
+
+"update_notification_title" = "Actualización disponible en MacMirror";
+"update_notification_body" = "MacMirror %@ está disponible. Haz clic para actualizar.";
+
+

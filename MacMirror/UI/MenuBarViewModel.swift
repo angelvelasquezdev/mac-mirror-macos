@@ -26,6 +26,14 @@ class MenuBarViewModel: ObservableObject {
     @Published var remoteTestStatus: RemoteTestStatus = .idle
     @Published var companionCompatibilityWarning: String? = nil
 
+    @Published var availableUpdate: UpdateInfo? = nil
+    @Published var isCheckingForUpdates: Bool = false
+    @Published var isUpgradingWithBrew: Bool = false
+    @Published var brewUpgradeStatusMessage: String? = nil
+
+    private let updateManager = UpdateManager.shared
+    private var cancellables = Set<AnyCancellable>()
+
     private let server = HTTPServer()
     private let wsServer = WebSocketServer()
     private let publisher = BonjourPublisher()
@@ -85,6 +93,44 @@ class MenuBarViewModel: ObservableObject {
         } catch {
             print("Failed to initialize networking stack: \(error)")
         }
+
+        // Update Manager subscriptions and background scheduling
+        updateManager.$availableUpdate
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] update in
+                self?.availableUpdate = update
+            }
+            .store(in: &cancellables)
+
+        updateManager.$isChecking
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isChecking in
+                self?.isCheckingForUpdates = isChecking
+            }
+            .store(in: &cancellables)
+
+        updateManager.$isUpgrading
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isUpgrading in
+                self?.isUpgradingWithBrew = isUpgrading
+            }
+            .store(in: &cancellables)
+
+        updateManager.$upgradeStatusMessage
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] msg in
+                self?.brewUpgradeStatusMessage = msg
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: .macMirrorUpdateNotificationClicked)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.promptOrStartUpgrade()
+            }
+            .store(in: &cancellables)
+
+        updateManager.startBackgroundScheduler()
     }
     
     func refreshNotificationPermission() {
@@ -346,6 +392,116 @@ class MenuBarViewModel: ObservableObject {
         self.companionCompatibilityWarning = nil
     }
 
+    func dismissUpdateBanner() {
+        updateManager.dismissAvailableUpdate()
+    }
+
+    func checkForUpdates(manual: Bool = false) {
+        Task { @MainActor in
+            let result = await updateManager.checkForUpdates()
+            if manual {
+                self.handleManualUpdateResult(result)
+            }
+        }
+    }
+
+    private func handleManualUpdateResult(_ result: UpdateCheckResult) {
+        NSApp.activate(ignoringOtherApps: true)
+        switch result {
+        case .upToDate(let currentVer):
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("update_alert_uptodate_title", comment: "")
+            alert.informativeText = String(format: NSLocalizedString("update_alert_uptodate_desc", comment: ""), currentVer)
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: NSLocalizedString("update_alert_uptodate_ok", comment: ""))
+            alert.runModal()
+
+        case .updateAvailable:
+            promptOrStartUpgrade()
+
+        case .failure(let errorMsg):
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("update_alert_check_error_title", comment: "")
+            alert.informativeText = String(format: NSLocalizedString("update_alert_check_error_desc", comment: ""), errorMsg)
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: NSLocalizedString("update_btn_open_releases", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
+            if alert.runModal() == .alertFirstButtonReturn {
+                let channel = ReleaseChannel.channel(for: updateManager.currentVersion)
+                NSWorkspace.shared.open(channel.fallbackReleaseUrl)
+            }
+        }
+    }
+
+    func promptOrStartUpgrade() {
+        guard let update = availableUpdate ?? updateManager.availableUpdate else {
+            return
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("update_alert_available_title", comment: "")
+
+        let hasHomebrew = UpdateManager.isHomebrewInstalled
+        if hasHomebrew {
+            alert.informativeText = String(format: NSLocalizedString("update_alert_available_desc", comment: ""), update.availableVersion)
+            alert.addButton(withTitle: NSLocalizedString("update_alert_confirm_brew", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
+
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                performHomebrewUpgrade(caskName: update.caskName)
+            } else if response == .alertSecondButtonReturn {
+                NSWorkspace.shared.open(update.releaseUrl)
+            }
+        } else {
+            alert.informativeText = String(format: NSLocalizedString("update_alert_available_desc_no_brew", comment: ""), update.availableVersion)
+            alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
+
+            let response = alert.runModal()
+            if response == .alertFirstButtonReturn {
+                NSWorkspace.shared.open(update.releaseUrl)
+            }
+        }
+    }
+
+    private func performHomebrewUpgrade(caskName: String) {
+        Task { @MainActor in
+            let result = await updateManager.upgradeViaHomebrew(caskName: caskName)
+            switch result {
+            case .success:
+                break
+            case .homebrewNotFound:
+                let alert = NSAlert()
+                alert.messageText = NSLocalizedString("update_error_title", comment: "")
+                alert.informativeText = NSLocalizedString("update_error_no_brew", comment: "")
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
+                alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
+                if alert.runModal() == .alertFirstButtonReturn {
+                    if let update = self.availableUpdate ?? self.updateManager.availableUpdate {
+                        NSWorkspace.shared.open(update.releaseUrl)
+                    }
+                }
+            case .commandFailed(_, let output):
+                let alert = NSAlert()
+                alert.messageText = NSLocalizedString("update_error_title", comment: "")
+                let displayError = output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Unknown error" : output
+                alert.informativeText = String(format: NSLocalizedString("update_error_desc", comment: ""), displayError)
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
+                alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
+                if alert.runModal() == .alertFirstButtonReturn {
+                    if let update = self.availableUpdate ?? self.updateManager.availableUpdate {
+                        NSWorkspace.shared.open(update.releaseUrl)
+                    }
+                }
+            }
+        }
+    }
+
     private func setupWebSocketHandlers() {
         wsServer.onClientCountChanged = { [weak self] count in
             Task { @MainActor in
@@ -514,7 +670,9 @@ class MenuBarViewModel: ObservableObject {
                             socklen_t(0),
                             NI_NUMERICHOST
                         )
-                        address = String(cString: hostname)
+                        address = hostname.withUnsafeBufferPointer { ptr in
+                            ptr.baseAddress.map { String(cString: $0) }
+                        }
                     }
                 }
             }
