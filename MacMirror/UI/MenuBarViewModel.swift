@@ -189,7 +189,13 @@ class MenuBarViewModel: ObservableObject {
             }
         }
 
-        // 4. Move app bundle to Trash and terminate
+        // 4. If installed via Homebrew Cask, uninstall via brew
+        if let installedCask = UpdateManager.detectInstalledCask() {
+            updateManager.uninstallViaHomebrew(caskName: installedCask)
+            return
+        }
+
+        // 5. Otherwise, move app bundle to Trash and terminate
         let bundleURL = Bundle.main.bundleURL
         NSWorkspace.shared.recycle([bundleURL]) { _, _ in
             DispatchQueue.main.async {

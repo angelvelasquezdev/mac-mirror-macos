@@ -113,4 +113,16 @@ struct UpdateManagerTests {
         )
         #expect(info1 == info2)
     }
+
+    @Test("Detect installed Homebrew cask and executable")
+    func testDetectInstalledHomebrewCask() {
+        if UpdateManager.isHomebrewInstalled {
+            #expect(UpdateManager.findBrewExecutablePath() != nil)
+        }
+        // If macmirror@dev is in Caskroom, detectInstalledCask() should find it
+        let detected = UpdateManager.detectInstalledCask()
+        if FileManager.default.fileExists(atPath: "/opt/homebrew/Caskroom/macmirror@dev") {
+            #expect(detected == "macmirror@dev")
+        }
+    }
 }

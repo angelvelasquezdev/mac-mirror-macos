@@ -325,6 +325,42 @@ public final class UpdateManager: ObservableObject {
         findBrewExecutablePath() != nil
     }
 
+    /// Detects if MacMirror is managed by Homebrew Cask by checking Caskroom folders or installed cask names
+    nonisolated public static func detectInstalledCask() -> String? {
+        let caskPrefixes = [
+            "/opt/homebrew/Caskroom",
+            "/usr/local/Caskroom"
+        ]
+        let candidateCasks = ["macmirror@dev", "macmirror@beta", "macmirror"]
+        let fm = FileManager.default
+
+        for prefix in caskPrefixes {
+            for cask in candidateCasks {
+                let caskPath = (prefix as NSString).appendingPathComponent(cask)
+                if fm.fileExists(atPath: caskPath) {
+                    return cask
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Launches a detached background process to uninstall the cask via Homebrew and immediately terminates the current app
+    public func uninstallViaHomebrew(caskName: String) {
+        guard let brewPath = Self.findBrewExecutablePath() else { return }
+
+        // Script runs in background detached, waits a brief moment for MacMirror to quit cleanly, then runs brew uninstall --cask --force
+        let uninstallScript = "sleep 1 && '\(brewPath)' uninstall --cask --force '\(caskName)' >/dev/null 2>&1"
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", uninstallScript]
+        try? process.run()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            NSApplication.shared.terminate(nil)
+        }
+    }
+
     // MARK: - Upgrading via Homebrew
 
     public func upgradeViaHomebrew(caskName: String? = nil) async -> UpgradeExecutionResult {
