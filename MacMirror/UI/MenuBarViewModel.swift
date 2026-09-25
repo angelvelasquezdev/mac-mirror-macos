@@ -136,7 +136,10 @@ class MenuBarViewModel: ObservableObject {
     func refreshNotificationPermission() {
         NotificationManager.shared.checkAuthorizationStatus { [weak self] status in
             Task { @MainActor in
-                self?.notificationPermissionGranted = (status == .authorized || status == .provisional)
+                let granted = (status == .authorized || status == .provisional)
+                if self?.notificationPermissionGranted != granted {
+                    self?.notificationPermissionGranted = granted
+                }
             }
         }
     }
@@ -366,9 +369,13 @@ class MenuBarViewModel: ObservableObject {
                     if self.companionCompatibilityWarning == nil {
                         self.showCompatibilityNotification(companionVersion: compatResult.peerAppVersion)
                     }
-                    self.companionCompatibilityWarning = compatResult.peerAppVersion
+                    if self.companionCompatibilityWarning != compatResult.peerAppVersion {
+                        self.companionCompatibilityWarning = compatResult.peerAppVersion
+                    }
                 } else {
-                    self.companionCompatibilityWarning = nil
+                    if self.companionCompatibilityWarning != nil {
+                        self.companionCompatibilityWarning = nil
+                    }
                 }
             }
             let isCurrentlyPaired = self.isPaired
@@ -511,7 +518,10 @@ class MenuBarViewModel: ObservableObject {
     private func setupWebSocketHandlers() {
         wsServer.onClientCountChanged = { [weak self] count in
             Task { @MainActor in
-                self?.isClientConnected = count > 0
+                let connected = count > 0
+                if self?.isClientConnected != connected {
+                    self?.isClientConnected = connected
+                }
             }
         }
 
@@ -519,7 +529,9 @@ class MenuBarViewModel: ObservableObject {
             guard let self = self else { return }
             Task { @MainActor in
                 self.lastClientActivity = Date()
-                self.isClientConnected = true
+                if !self.isClientConnected {
+                    self.isClientConnected = true
+                }
             }
             if message.contains("\"action\":\"unpair\"") {
                 Task { @MainActor in
