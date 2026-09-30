@@ -3,6 +3,7 @@ import Combine
 import CryptoKit
 import SwiftUI
 import UserNotifications
+import ServiceManagement
 
 @MainActor
 class MenuBarViewModel: ObservableObject {
@@ -11,6 +12,7 @@ class MenuBarViewModel: ObservableObject {
     @Published var isPaired: Bool = false
     @Published var isClientConnected: Bool = false
     @Published var notificationPermissionGranted: Bool = true
+    @Published var launchAtLogin: Bool = false
     @Published var pairedDeviceName: String?
     @Published var pairingPin: String = ""
     @Published var localIP: String = "Unknown"
@@ -84,6 +86,7 @@ class MenuBarViewModel: ObservableObject {
         // Request macOS native notification permission on startup and check status
         NotificationManager.shared.requestPermission()
         refreshNotificationPermission()
+        refreshLaunchAtLoginStatus()
         
         // Start network listener, WebSocket listener and Bonjour publishing
         do {
@@ -144,6 +147,27 @@ class MenuBarViewModel: ObservableObject {
         }
     }
 
+    func refreshLaunchAtLoginStatus() {
+        self.launchAtLogin = (SMAppService.mainApp.status == .enabled)
+    }
+
+    func toggleLaunchAtLogin(enabled: Bool) {
+        do {
+            if enabled {
+                if SMAppService.mainApp.status != .enabled {
+                    try SMAppService.mainApp.register()
+                }
+            } else {
+                if SMAppService.mainApp.status == .enabled {
+                    try SMAppService.mainApp.unregister()
+                }
+            }
+        } catch {
+            print("Failed to change launch at login status: \(error)")
+        }
+        refreshLaunchAtLoginStatus()
+    }
+
     func generateNewPin() {
         // Generate a cryptographically secure random 6-digit PIN
         let pinVal = Int.random(in: 100000...999999)
@@ -159,6 +183,7 @@ class MenuBarViewModel: ObservableObject {
         }
         KeychainHelper.shared.deleteKey()
         UserDefaults.standard.removeObject(forKey: "pairedDeviceName")
+        toggleLaunchAtLogin(enabled: false)
         
         DispatchQueue.main.async {
             self.isPaired = false
@@ -308,6 +333,7 @@ class MenuBarViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         self.isPaired = true
                         self.pairedDeviceName = clientName
+                        self.toggleLaunchAtLogin(enabled: true)
                     }
                     
                     return (200, Data("{\"success\":true}".utf8))

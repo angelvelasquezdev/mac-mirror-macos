@@ -94,6 +94,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             eventMonitor?.stop()
         } else {
             viewModel.refreshNotificationPermission()
+            viewModel.refreshLaunchAtLoginStatus()
             popover.show(
                 relativeTo: button.bounds,
                 of: button,

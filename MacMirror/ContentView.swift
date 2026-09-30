@@ -32,6 +32,10 @@ struct ContentView: View {
                 isPaired: viewModel.isPaired,
                 isConnected: viewModel.isPaired && viewModel.isClientConnected,
                 isCheckingForUpdates: viewModel.isCheckingForUpdates,
+                launchAtLogin: viewModel.launchAtLogin,
+                onToggleLaunchAtLogin: { enabled in
+                    viewModel.toggleLaunchAtLogin(enabled: enabled)
+                },
                 onCheckForUpdates: {
                     viewModel.checkForUpdates(manual: true)
                 },
@@ -396,6 +400,8 @@ struct HeaderView: View {
     let isPaired: Bool
     let isConnected: Bool
     let isCheckingForUpdates: Bool
+    let launchAtLogin: Bool
+    let onToggleLaunchAtLogin: (Bool) -> Void
     let onCheckForUpdates: () -> Void
     let onSendTestNotification: () -> Void
     let onUnpair: () -> Void
@@ -472,6 +478,15 @@ struct HeaderView: View {
                     Label(NSLocalizedString("menu_check_updates", comment: ""), systemImage: "arrow.triangle.2.circlepath")
                 }
                 .disabled(isCheckingForUpdates)
+
+                Divider()
+
+                Toggle(isOn: Binding(
+                    get: { launchAtLogin },
+                    set: { onToggleLaunchAtLogin($0) }
+                )) {
+                    Label(NSLocalizedString("menu_launch_at_login", comment: ""), systemImage: "power")
+                }
 
                 Divider()
 

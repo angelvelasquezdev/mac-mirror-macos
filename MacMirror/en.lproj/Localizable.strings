@@ -10,6 +10,7 @@
 
 "menu_about" = "About MacMirror";
 "menu_app_version" = "MacMirror v%@ (%@)";
+"menu_launch_at_login" = "Launch at Login";
 "menu_send_test" = "Send Test Notification";
 "menu_unpair" = "Unpair Android Device";
 "menu_quit" = "Quit MacMirror";

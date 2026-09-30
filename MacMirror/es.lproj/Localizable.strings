@@ -10,6 +10,7 @@
 
 "menu_about" = "Acerca de MacMirror";
 "menu_app_version" = "MacMirror v%@ (%@)";
+"menu_launch_at_login" = "Iniciar al iniciar sesión";
 "menu_send_test" = "Enviar notificación de prueba";
 "menu_unpair" = "Desvincular dispositivo Android";
 "menu_quit" = "Salir de MacMirror";
