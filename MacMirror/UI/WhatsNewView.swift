@@ -35,7 +35,7 @@ public struct WhatsNewRelease: Sendable {
 public struct WhatsNewCatalog {
     public static let releases: [WhatsNewRelease] = [
         WhatsNewRelease(
-            version: "1.1",
+            version: "1.2",
             items: [
                 WhatsNewFeatureItem(
                     id: "autostart",
@@ -87,7 +87,7 @@ public struct WhatsNewView: View {
     @Environment(\.colorScheme) var colorScheme
 
     public init(release: WhatsNewRelease? = nil, onDismiss: @escaping () -> Void) {
-        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
         self.release = release ?? WhatsNewCatalog.highlights(for: currentVer) ?? WhatsNewCatalog.latestRelease ?? WhatsNewRelease(version: currentVer, items: [])
         self.onDismiss = onDismiss
     }

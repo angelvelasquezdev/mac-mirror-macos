@@ -174,7 +174,7 @@ class MenuBarViewModel: ObservableObject {
 
     func checkWhatsNewOnLaunch() {
         let lastSeen = UserDefaults.standard.string(forKey: lastSeenVersionKey)
-        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
         let isExistingUser = (UserDefaults.standard.string(forKey: "pairedDeviceName") != nil)
 
         if lastSeen == nil {
@@ -196,7 +196,7 @@ class MenuBarViewModel: ObservableObject {
     }
 
     func dismissWhatsNew() {
-        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
         UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
         self.showWhatsNew = false
     }

@@ -7,11 +7,11 @@ struct WhatsNewCatalogTests {
 
     @Test("Catalog provides highlights for supported versions")
     func testCatalogHasHighlights() {
-        #expect(WhatsNewCatalog.hasHighlights(for: "1.1"))
-        #expect(WhatsNewCatalog.hasHighlights(for: "1.1.0"))
-        #expect(WhatsNewCatalog.hasHighlights(for: "1.1-beta.1"))
+        #expect(WhatsNewCatalog.hasHighlights(for: "1.2"))
+        #expect(WhatsNewCatalog.hasHighlights(for: "1.2.0"))
+        #expect(WhatsNewCatalog.hasHighlights(for: "1.2-beta.1"))
 
-        let release = WhatsNewCatalog.highlights(for: "1.1.0")
+        let release = WhatsNewCatalog.highlights(for: "1.2.0")
         #expect(release != nil)
         #expect(release?.items.isEmpty == false)
 
@@ -23,8 +23,9 @@ struct WhatsNewCatalogTests {
             #expect(!item.descriptionKey.isEmpty)
         }
 
+        #expect(!WhatsNewCatalog.hasHighlights(for: "1.1.0"))
         #expect(!WhatsNewCatalog.hasHighlights(for: "2.0.0"))
         #expect(WhatsNewCatalog.highlights(for: "2.0.0") == nil)
-        #expect(WhatsNewCatalog.latestRelease?.version == "1.1")
+        #expect(WhatsNewCatalog.latestRelease?.version == "1.2")
     }
 }
