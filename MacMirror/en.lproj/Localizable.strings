@@ -10,6 +10,8 @@
 
 "menu_about" = "About MacMirror";
 "menu_app_version" = "MacMirror v%@ (%@)";
+"menu_whats_new" = "What's New in this Version";
+"menu_launch_at_login" = "Launch at Login";
 "menu_send_test" = "Send Test Notification";
 "menu_unpair" = "Unpair Android Device";
 "menu_quit" = "Quit MacMirror";
@@ -87,5 +89,15 @@
 
 "update_notification_title" = "MacMirror Update Available";
 "update_notification_body" = "MacMirror %@ is now available. Click to update.";
+
+"whats_new_title" = "What's New in MacMirror";
+"whats_new_version_badge" = "Version %@";
+"whats_new_continue" = "Continue";
+"whats_new_autostart_title" = "Launch at Login";
+"whats_new_autostart_desc" = "MacMirror can now automatically launch when you log into your Mac so you never miss an alert.";
+"whats_new_low_latency_title" = "Low-Latency WebSockets";
+"whats_new_low_latency_desc" = "Instant real-time notification streaming with guaranteed delivery acknowledgments.";
+"whats_new_e2ee_title" = "End-to-End Encryption";
+"whats_new_e2ee_desc" = "All notification payloads are protected using AES-256-GCM and ephemeral ECDH keys.";
 
 

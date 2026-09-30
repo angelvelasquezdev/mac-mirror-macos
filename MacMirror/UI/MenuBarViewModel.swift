@@ -3,6 +3,7 @@ import Combine
 import CryptoKit
 import SwiftUI
 import UserNotifications
+import ServiceManagement
 
 @MainActor
 class MenuBarViewModel: ObservableObject {
@@ -11,6 +12,8 @@ class MenuBarViewModel: ObservableObject {
     @Published var isPaired: Bool = false
     @Published var isClientConnected: Bool = false
     @Published var notificationPermissionGranted: Bool = true
+    @Published var launchAtLogin: Bool = false
+    @Published var showWhatsNew: Bool = false
     @Published var pairedDeviceName: String?
     @Published var pairingPin: String = ""
     @Published var localIP: String = "Unknown"
@@ -84,6 +87,8 @@ class MenuBarViewModel: ObservableObject {
         // Request macOS native notification permission on startup and check status
         NotificationManager.shared.requestPermission()
         refreshNotificationPermission()
+        refreshLaunchAtLoginStatus()
+        checkWhatsNewOnLaunch()
         
         // Start network listener, WebSocket listener and Bonjour publishing
         do {
@@ -144,6 +149,62 @@ class MenuBarViewModel: ObservableObject {
         }
     }
 
+    func refreshLaunchAtLoginStatus() {
+        self.launchAtLogin = (SMAppService.mainApp.status == .enabled)
+    }
+
+    func toggleLaunchAtLogin(enabled: Bool) {
+        do {
+            if enabled {
+                if SMAppService.mainApp.status != .enabled {
+                    try SMAppService.mainApp.register()
+                }
+            } else {
+                if SMAppService.mainApp.status == .enabled {
+                    try SMAppService.mainApp.unregister()
+                }
+            }
+        } catch {
+            print("Failed to change launch at login status: \(error)")
+        }
+        refreshLaunchAtLoginStatus()
+    }
+
+    private let lastSeenVersionKey = "lastSeenVersionForWhatsNew"
+
+    func checkWhatsNewOnLaunch() {
+        let lastSeen = UserDefaults.standard.string(forKey: lastSeenVersionKey)
+        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
+        let isExistingUser = (UserDefaults.standard.string(forKey: "pairedDeviceName") != nil)
+
+        if lastSeen == nil {
+            if isExistingUser && WhatsNewCatalog.hasHighlights(for: currentVer) {
+                // Existing user upgraded to a version with What's New highlights
+                self.showWhatsNew = true
+            } else {
+                // First install: store current version so What's New is skipped for fresh installs
+                UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
+            }
+        } else if lastSeen != currentVer {
+            // Update occurred! Check if this version has relevant highlights
+            if WhatsNewCatalog.hasHighlights(for: currentVer) {
+                self.showWhatsNew = true
+            } else {
+                UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
+            }
+        }
+    }
+
+    func dismissWhatsNew() {
+        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.2.0"
+        UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
+        self.showWhatsNew = false
+    }
+
+    func triggerWhatsNewManual() {
+        self.showWhatsNew = true
+    }
+
     func generateNewPin() {
         // Generate a cryptographically secure random 6-digit PIN
         let pinVal = Int.random(in: 100000...999999)
@@ -159,6 +220,7 @@ class MenuBarViewModel: ObservableObject {
         }
         KeychainHelper.shared.deleteKey()
         UserDefaults.standard.removeObject(forKey: "pairedDeviceName")
+        toggleLaunchAtLogin(enabled: false)
         
         DispatchQueue.main.async {
             self.isPaired = false
@@ -308,6 +370,7 @@ class MenuBarViewModel: ObservableObject {
                     DispatchQueue.main.async {
                         self.isPaired = true
                         self.pairedDeviceName = clientName
+                        self.toggleLaunchAtLogin(enabled: true)
                     }
                     
                     return (200, Data("{\"success\":true}".utf8))

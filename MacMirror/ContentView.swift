@@ -32,6 +32,13 @@ struct ContentView: View {
                 isPaired: viewModel.isPaired,
                 isConnected: viewModel.isPaired && viewModel.isClientConnected,
                 isCheckingForUpdates: viewModel.isCheckingForUpdates,
+                launchAtLogin: viewModel.launchAtLogin,
+                onToggleLaunchAtLogin: { enabled in
+                    viewModel.toggleLaunchAtLogin(enabled: enabled)
+                },
+                onShowWhatsNew: {
+                    viewModel.triggerWhatsNewManual()
+                },
                 onCheckForUpdates: {
                     viewModel.checkForUpdates(manual: true)
                 },
@@ -124,6 +131,11 @@ struct ContentView: View {
         .background(VisualEffectView(material: .popover, blendingMode: .behindWindow))
         .background(colorScheme == .light ? Color.white.opacity(0.35) : Color.black.opacity(0.2))
         .animation(.spring(response: 0.35, dampingFraction: 0.82), value: viewModel.isPaired)
+        .sheet(isPresented: $viewModel.showWhatsNew) {
+            WhatsNewView(onDismiss: {
+                viewModel.dismissWhatsNew()
+            })
+        }
     }
 }
 
@@ -396,6 +408,9 @@ struct HeaderView: View {
     let isPaired: Bool
     let isConnected: Bool
     let isCheckingForUpdates: Bool
+    let launchAtLogin: Bool
+    let onToggleLaunchAtLogin: (Bool) -> Void
+    let onShowWhatsNew: () -> Void
     let onCheckForUpdates: () -> Void
     let onSendTestNotification: () -> Void
     let onUnpair: () -> Void
@@ -468,10 +483,23 @@ struct HeaderView: View {
                     Label(NSLocalizedString("menu_about", comment: ""), systemImage: "info.circle")
                 }
 
+                Button(action: onShowWhatsNew) {
+                    Label(NSLocalizedString("menu_whats_new", comment: ""), systemImage: "sparkles")
+                }
+
                 Button(action: onCheckForUpdates) {
                     Label(NSLocalizedString("menu_check_updates", comment: ""), systemImage: "arrow.triangle.2.circlepath")
                 }
                 .disabled(isCheckingForUpdates)
+
+                Divider()
+
+                Toggle(isOn: Binding(
+                    get: { launchAtLogin },
+                    set: { onToggleLaunchAtLogin($0) }
+                )) {
+                    Label(NSLocalizedString("menu_launch_at_login", comment: ""), systemImage: "power")
+                }
 
                 Divider()
 
