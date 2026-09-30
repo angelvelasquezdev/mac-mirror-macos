@@ -13,6 +13,7 @@ class MenuBarViewModel: ObservableObject {
     @Published var isClientConnected: Bool = false
     @Published var notificationPermissionGranted: Bool = true
     @Published var launchAtLogin: Bool = false
+    @Published var showWhatsNew: Bool = false
     @Published var pairedDeviceName: String?
     @Published var pairingPin: String = ""
     @Published var localIP: String = "Unknown"
@@ -87,6 +88,7 @@ class MenuBarViewModel: ObservableObject {
         NotificationManager.shared.requestPermission()
         refreshNotificationPermission()
         refreshLaunchAtLoginStatus()
+        checkWhatsNewOnLaunch()
         
         // Start network listener, WebSocket listener and Bonjour publishing
         do {
@@ -166,6 +168,41 @@ class MenuBarViewModel: ObservableObject {
             print("Failed to change launch at login status: \(error)")
         }
         refreshLaunchAtLoginStatus()
+    }
+
+    private let lastSeenVersionKey = "lastSeenVersionForWhatsNew"
+
+    func checkWhatsNewOnLaunch() {
+        let lastSeen = UserDefaults.standard.string(forKey: lastSeenVersionKey)
+        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        let isExistingUser = (UserDefaults.standard.string(forKey: "pairedDeviceName") != nil)
+
+        if lastSeen == nil {
+            if isExistingUser && WhatsNewCatalog.hasHighlights(for: currentVer) {
+                // Existing user upgraded to a version with What's New highlights
+                self.showWhatsNew = true
+            } else {
+                // First install: store current version so What's New is skipped for fresh installs
+                UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
+            }
+        } else if lastSeen != currentVer {
+            // Update occurred! Check if this version has relevant highlights
+            if WhatsNewCatalog.hasHighlights(for: currentVer) {
+                self.showWhatsNew = true
+            } else {
+                UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
+            }
+        }
+    }
+
+    func dismissWhatsNew() {
+        let currentVer = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.1.0"
+        UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
+        self.showWhatsNew = false
+    }
+
+    func triggerWhatsNewManual() {
+        self.showWhatsNew = true
     }
 
     func generateNewPin() {
