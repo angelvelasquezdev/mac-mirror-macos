@@ -43,7 +43,7 @@ Engineered with **SwiftUI** following **Apple Human Interface Guidelines**, it f
 - 🛡 **Silent & Frictionless Storage**: Session keys are stored in private application storage (`~/Library/Application Support/MacMirror/`) with strict POSIX permissions `0600`, completely avoiding annoying system Keychain password prompts during builds and updates.
 - 🔄 **Integrated Update Checker**: Automatic 24-hour background update checks and manual "Check for Updates..." menu item, with seamless one-click Homebrew Cask or GitHub Releases upgrades across Stable, Beta, and Dev channels.
 - 🗑 **Clean In-App Uninstallation**: Built-in "Uninstall MacMirror…" action that safely disconnects paired devices, clears local session keys and preferences, and cleanly removes the app via Homebrew Cask or macOS Trash.
-- 🧪 **Bidirectional Diagnostics & Delivery ACK**: Send test alerts from the Menu Bar and emit real-time cryptographic delivery receipts (ACK) back to Android with roundtrip latency measurement.
+- 🧪 **Bidirectional Diagnostics & Delivery ACK**: Send test alerts from the Menu Bar and emit real-time cryptographic delivery receipts (ACK) back to Android with roundtrip latency measurement. Fully integrated with Android's 8-step diagnostic pipeline and smart Wi-Fi awareness.
 - 🤝 **Protocol Compatibility & Version Negotiation**: Automatic protocol verification (`PROTOCOL_VERSION`) ensuring seamless communication with the companion Android client, with informative alert banners for outdated companion versions.
 - 🔄 **Bidirectional Unpairing**: Unpairing from macOS automatically disconnects the Android client and regenerates a fresh pairing PIN.
 - 🌐 **Full Internationalization (i18n)**: Native string catalogs supporting English and Spanish.

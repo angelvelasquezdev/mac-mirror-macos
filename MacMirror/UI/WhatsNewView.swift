@@ -57,6 +57,13 @@ public struct WhatsNewCatalog {
                     iconColor: Color.green,
                     titleKey: "whats_new_e2ee_title",
                     descriptionKey: "whats_new_e2ee_desc"
+                ),
+                WhatsNewFeatureItem(
+                    id: "wifi_awareness",
+                    iconName: "wifi.exclamationmark",
+                    iconColor: Color.orange,
+                    titleKey: "whats_new_wifi_awareness_title",
+                    descriptionKey: "whats_new_wifi_awareness_desc"
                 )
             ]
         )

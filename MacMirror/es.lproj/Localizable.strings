@@ -99,5 +99,7 @@
 "whats_new_low_latency_desc" = "Transmisión de notificaciones en tiempo real con confirmaciones de recepción garantizadas.";
 "whats_new_e2ee_title" = "Cifrado de extremo a extremo";
 "whats_new_e2ee_desc" = "Todas las notificaciones están protegidas con AES-256-GCM y claves efímeras ECDH.";
+"whats_new_wifi_awareness_title" = "Detección inteligente de Wi-Fi";
+"whats_new_wifi_awareness_desc" = "Te avisa al instante si el Wi-Fi se desconecta con acceso rápido para reactivar la sincronización.";
 
 
