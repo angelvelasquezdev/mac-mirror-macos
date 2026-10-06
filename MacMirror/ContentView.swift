@@ -127,15 +127,10 @@ struct ContentView: View {
             .frame(maxHeight: .infinity)
         }
         .frame(width: 360, height: 520)
-        // macOS translucent vibrancy background
+        // Liquid Glass backdrop with native refracion and legacy fallback
+        .liquidGlass(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .background(VisualEffectView(material: .popover, blendingMode: .behindWindow))
-        .background(colorScheme == .light ? Color.white.opacity(0.35) : Color.black.opacity(0.2))
         .animation(.spring(response: 0.35, dampingFraction: 0.82), value: viewModel.isPaired)
-        .sheet(isPresented: $viewModel.showWhatsNew) {
-            WhatsNewView(onDismiss: {
-                viewModel.dismissWhatsNew()
-            })
-        }
     }
 }
 
@@ -435,39 +430,46 @@ struct HeaderView: View {
     }
 
     private func promptUninstall() {
-        NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = NSLocalizedString("uninstall_alert_title", comment: "")
-        alert.informativeText = NSLocalizedString("uninstall_alert_message", comment: "")
-        alert.alertStyle = .critical
-        alert.addButton(withTitle: NSLocalizedString("uninstall_alert_confirm", comment: ""))
-        alert.addButton(withTitle: NSLocalizedString("uninstall_alert_cancel", comment: ""))
-
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            onUninstall()
-        }
+        GlassPanelManager.shared.showAlert(
+            title: NSLocalizedString("uninstall_alert_title", comment: ""),
+            message: NSLocalizedString("uninstall_alert_message", comment: ""),
+            icon: .warningWithAppIcon,
+            buttons: [
+                GlassAlertButton(title: NSLocalizedString("uninstall_alert_cancel", comment: ""), role: .cancel) {},
+                GlassAlertButton(title: NSLocalizedString("uninstall_alert_confirm", comment: ""), role: .destructive) {
+                    onUninstall()
+                }
+            ]
+        )
     }
 
     var body: some View {
         HStack(spacing: 10) {
-            // App Icon / Symbol
+            // App Icon / Symbol with Liquid Glass
             ZStack {
                 Circle()
-                    .fill(Color.accentColor.opacity(0.14))
-                    .frame(width: 30, height: 30)
+                    .fill(Color.accentColor.opacity(0.15))
+                    .frame(width: 32, height: 32)
                 Image(systemName: "bell.and.waves.left.and.right.fill")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.accentColor)
             }
+            .liquidGlass(.tinted(Color.accentColor), in: Circle())
             
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(NSLocalizedString("app_name", comment: ""))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.primary)
                 Text(String(format: NSLocalizedString("ip_format", comment: ""), localIP))
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .foregroundColor(.secondary)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1.5)
+                    .liquidGlass(.clear, in: Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.primary.opacity(0.06), lineWidth: 0.6)
+                    )
             }
             
             Spacer()
@@ -555,35 +557,24 @@ struct StatusBadgeView: View {
             }
         }()
 
-        let backgroundColor: Color = {
-            if colorScheme == .light {
-                return isOnline ? Color(red: 0.11, green: 0.52, blue: 0.20).opacity(0.14) : Color(red: 0.72, green: 0.38, blue: 0.0).opacity(0.14)
-            } else {
-                return (isOnline ? Color(nsColor: .systemGreen) : Color(nsColor: .systemOrange)).opacity(0.16)
-            }
-        }()
-
         let labelKey = isOnline ? "status_connected" : "status_waiting"
 
         HStack(spacing: 5) {
             Circle()
                 .fill(foregroundColor)
                 .frame(width: 6, height: 6)
-                .shadow(color: foregroundColor.opacity(0.4), radius: 2)
+                .shadow(color: foregroundColor.opacity(0.5), radius: 3)
             
             Text(NSLocalizedString(labelKey, comment: ""))
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(foregroundColor)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .background(
-            Capsule()
-                .fill(backgroundColor)
-        )
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
+        .liquidGlass(.interactiveTinted(foregroundColor), in: Capsule())
         .overlay(
             Capsule()
-                .stroke(foregroundColor.opacity(colorScheme == .light ? 0.35 : 0.2), lineWidth: 0.8)
+                .stroke(foregroundColor.opacity(colorScheme == .light ? 0.35 : 0.25), lineWidth: 0.8)
         )
     }
 }
@@ -599,21 +590,23 @@ struct PairedView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            // Device Connection Inset Card
+            // Device Connection Inset Card with Liquid Glass
             HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 34, height: 34)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.14))
+                        .frame(width: 36, height: 36)
                     Image(systemName: "iphone.radiowaves.left.and.right")
-                        .font(.system(size: 16))
+                        .font(.system(size: 17))
                         .foregroundColor(.accentColor)
                 }
+                .liquidGlass(.tinted(Color.accentColor), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(NSLocalizedString("header_paired_phone", comment: ""))
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(.secondary)
+                        .tracking(0.3)
                     Text(pairedDevice)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.primary)
@@ -623,16 +616,13 @@ struct PairedView: View {
                 
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(colorScheme == .light ? Color(red: 0.11, green: 0.52, blue: 0.20) : Color(nsColor: .systemGreen))
-                    .font(.system(size: 14))
+                    .font(.system(size: 15))
             }
             .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(nsColor: .controlBackgroundColor).opacity(colorScheme == .light ? 0.6 : 0.45))
-            )
+            .liquidGlass(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.primary.opacity(colorScheme == .light ? 0.08 : 0.14), lineWidth: 0.8)
             )
             .padding(.horizontal, 16)
             .padding(.top, 12)
@@ -648,23 +638,33 @@ struct PairedView: View {
                     Text("\(notifications.count)")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 1)
-                        .background(Color.primary.opacity(0.06))
-                        .clipShape(Capsule())
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .liquidGlass(.clear, in: Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.primary.opacity(0.08), lineWidth: 0.6)
+                        )
                 }
                 
                 Spacer()
                 
                 if !notifications.isEmpty {
                     Button(action: onClearAll) {
-                        HStack(spacing: 3) {
+                        HStack(spacing: 4) {
                             Image(systemName: "trash")
                                 .font(.system(size: 9))
                             Text(NSLocalizedString("button_clear", comment: ""))
                                 .font(.system(size: 10, weight: .medium))
                         }
                         .foregroundColor(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .liquidGlass(.clear, in: Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.primary.opacity(0.06), lineWidth: 0.6)
+                        )
                     }
                     .buttonStyle(.plain)
                 }
@@ -709,6 +709,7 @@ struct PairedView: View {
 
 struct NotificationRow: View {
     let log: MenuBarViewModel.NotificationLog
+    @State private var isHovered: Bool = false
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
@@ -720,21 +721,22 @@ struct NotificationRow: View {
                 Image(nsImage: nsImage)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 28, height: 28)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .shadow(color: Color.black.opacity(0.08), radius: 1, y: 1)
+                    .frame(width: 30, height: 30)
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .shadow(color: Color.black.opacity(0.08), radius: 2, y: 1)
             } else {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 28, height: 28)
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.14))
+                        .frame(width: 30, height: 30)
                     Image(systemName: "bell.fill")
-                        .font(.system(size: 12))
+                        .font(.system(size: 13))
                         .foregroundColor(.accentColor)
                 }
+                .liquidGlass(.tinted(Color.accentColor), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
             }
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 HStack {
                     Text(log.appName)
                         .font(.system(size: 11, weight: .semibold))
@@ -757,19 +759,25 @@ struct NotificationRow: View {
                         .font(.system(size: 11, weight: .regular))
                         .foregroundColor(.secondary)
                         .lineLimit(2)
+                        .lineSpacing(1.5)
                 }
             }
         }
-        .padding(10)
+        .padding(11)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(colorScheme == .light ? 0.7 : 0.45))
-        )
+        .liquidGlass(.interactive, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(
+                    Color.primary.opacity(isHovered ? (colorScheme == .light ? 0.16 : 0.25) : (colorScheme == .light ? 0.07 : 0.12)),
+                    lineWidth: isHovered ? 1.0 : 0.8
+                )
         )
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 
@@ -789,12 +797,13 @@ struct UnpairedView: View {
             // Hero Icon
             ZStack {
                 Circle()
-                    .fill(Color.accentColor.opacity(0.1))
-                    .frame(width: 60, height: 60)
+                    .fill(Color.accentColor.opacity(0.14))
+                    .frame(width: 64, height: 64)
                 Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 26))
+                    .font(.system(size: 28))
                     .foregroundColor(.accentColor)
             }
+            .liquidGlass(.tinted(Color.accentColor), in: Circle())
             
             VStack(spacing: 6) {
                 Text(NSLocalizedString("connect_phone_title", comment: ""))
@@ -809,20 +818,17 @@ struct UnpairedView: View {
             }
 
             // PIN Display (Apple Style 3+3 Digits)
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Text(formatPin(pin))
                     .font(.system(size: 32, weight: .bold, design: .monospaced))
                     .tracking(6)
                     .foregroundColor(.primary)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 24)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.accentColor.opacity(colorScheme == .light ? 0.06 : 0.12))
-                    )
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 28)
+                    .liquidGlass(.interactiveTinted(Color.accentColor), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Color.accentColor.opacity(0.3), lineWidth: 1.5)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color.accentColor.opacity(0.35), lineWidth: 1.2)
                     )
                 
                 // Copy PIN to clipboard button
@@ -842,6 +848,9 @@ struct UnpairedView: View {
                             .font(.system(size: 11, weight: .medium))
                     }
                     .foregroundColor(copiedPin ? (colorScheme == .light ? Color(red: 0.11, green: 0.52, blue: 0.20) : Color(nsColor: .systemGreen)) : .accentColor)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .liquidGlass(.clear, in: Capsule())
                 }
                 .buttonStyle(.plain)
             }
@@ -858,7 +867,7 @@ struct UnpairedView: View {
             Spacer()
             
             // Footer Info
-            HStack(spacing: 4) {
+            HStack(spacing: 5) {
                 Image(systemName: "wifi")
                     .font(.system(size: 10))
                 Text(NSLocalizedString("wifi_notice", comment: ""))

@@ -102,40 +102,42 @@ public struct WhatsNewView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // Header
-            VStack(spacing: 10) {
+            VStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.accentColor.opacity(0.15))
-                        .frame(width: 50, height: 50)
+                        .fill(Color.accentColor.opacity(0.16))
+                        .frame(width: 56, height: 56)
 
                     Image(systemName: "sparkles")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 26, weight: .bold))
                         .foregroundColor(.accentColor)
                 }
-                .padding(.top, 22)
+                .liquidGlass(.tinted(Color.accentColor), in: Circle())
+                .padding(.top, 28)
 
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     Text(NSLocalizedString("whats_new_title", comment: ""))
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 19, weight: .bold))
                         .foregroundColor(.primary)
 
                     Text(String(format: NSLocalizedString("whats_new_version_badge", comment: ""), release.version))
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundColor(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .liquidGlass(.clear, in: Capsule())
+                        .overlay(
                             Capsule()
-                                .fill(Color.secondary.opacity(0.12))
+                                .stroke(Color.primary.opacity(0.08), lineWidth: 0.8)
                         )
                 }
             }
-            .padding(.horizontal, 20)
+            .padding(.horizontal, 24)
 
             Divider()
-                .opacity(0.15)
-                .padding(.top, 14)
-                .padding(.bottom, 12)
+                .opacity(0.12)
+                .padding(.top, 16)
+                .padding(.bottom, 14)
 
             // Features list
             ScrollView(.vertical, showsIndicators: false) {
@@ -143,22 +145,23 @@ public struct WhatsNewView: View {
                     ForEach(release.items) { item in
                         HStack(alignment: .top, spacing: 14) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
                                     .fill(item.iconColor.opacity(0.15))
-                                    .frame(width: 36, height: 36)
+                                    .frame(width: 38, height: 38)
 
                                 Image(systemName: item.iconName)
-                                    .font(.system(size: 17, weight: .semibold))
+                                    .font(.system(size: 18, weight: .semibold))
                                     .foregroundColor(item.iconColor)
                             }
+                            .liquidGlass(.tinted(item.iconColor), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(NSLocalizedString(item.titleKey, comment: ""))
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.primary)
 
                                 Text(NSLocalizedString(item.descriptionKey, comment: ""))
-                                    .font(.system(size: 11))
+                                    .font(.system(size: 11, weight: .regular))
                                     .foregroundColor(.secondary)
                                     .lineSpacing(2)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -166,32 +169,49 @@ public struct WhatsNewView: View {
 
                             Spacer(minLength: 0)
                         }
+                        .padding(.horizontal, 8)
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 6)
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 10)
 
             Divider()
-                .opacity(0.15)
-                .padding(.bottom, 14)
+                .opacity(0.12)
+                .padding(.bottom, 16)
 
             // Action Button
             Button(action: onDismiss) {
                 Text(NSLocalizedString("whats_new_continue", comment: ""))
                     .font(.system(size: 13, weight: .semibold))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 30)
+                    .frame(height: 34)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.regular)
-            .padding(.horizontal, 20)
-            .padding(.bottom, 18)
+            .applyWhatsNewButtonStyle()
+            .padding(.horizontal, 24)
+            .padding(.bottom, 22)
+            .keyboardShortcut(.defaultAction)
         }
-        .frame(width: 340, height: 460)
-        .background(VisualEffectView(material: .popover, blendingMode: .behindWindow))
-        .background(colorScheme == .light ? Color.white.opacity(0.4) : Color.black.opacity(0.3))
+        .frame(width: 380, height: 500)
+        .liquidGlass(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.primary.opacity(colorScheme == .light ? 0.08 : 0.16), lineWidth: 0.8)
+        )
+        .shadow(color: Color.black.opacity(colorScheme == .light ? 0.14 : 0.4), radius: 28, y: 14)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func applyWhatsNewButtonStyle() -> some View {
+        if #available(macOS 26.0, *) {
+            self.buttonStyle(.glassProminent)
+        } else {
+            self.buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+        }
     }
 }

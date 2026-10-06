@@ -181,6 +181,7 @@ class MenuBarViewModel: ObservableObject {
             if isExistingUser && WhatsNewCatalog.hasHighlights(for: currentVer) {
                 // Existing user upgraded to a version with What's New highlights
                 self.showWhatsNew = true
+                showWhatsNewPanel()
             } else {
                 // First install: store current version so What's New is skipped for fresh installs
                 UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
@@ -189,6 +190,7 @@ class MenuBarViewModel: ObservableObject {
             // Update occurred! Check if this version has relevant highlights
             if WhatsNewCatalog.hasHighlights(for: currentVer) {
                 self.showWhatsNew = true
+                showWhatsNewPanel()
             } else {
                 UserDefaults.standard.set(currentVer, forKey: lastSeenVersionKey)
             }
@@ -201,8 +203,15 @@ class MenuBarViewModel: ObservableObject {
         self.showWhatsNew = false
     }
 
+    func showWhatsNewPanel() {
+        GlassPanelManager.shared.showWhatsNew { [weak self] in
+            self?.dismissWhatsNew()
+        }
+    }
+
     func triggerWhatsNewManual() {
         self.showWhatsNew = true
+        showWhatsNewPanel()
     }
 
     func generateNewPin() {
@@ -485,27 +494,31 @@ class MenuBarViewModel: ObservableObject {
         NSApp.activate(ignoringOtherApps: true)
         switch result {
         case .upToDate(let currentVer):
-            let alert = NSAlert()
-            alert.messageText = NSLocalizedString("update_alert_uptodate_title", comment: "")
-            alert.informativeText = String(format: NSLocalizedString("update_alert_uptodate_desc", comment: ""), currentVer)
-            alert.alertStyle = .informational
-            alert.addButton(withTitle: NSLocalizedString("update_alert_uptodate_ok", comment: ""))
-            alert.runModal()
+            GlassPanelManager.shared.showAlert(
+                title: NSLocalizedString("update_alert_uptodate_title", comment: ""),
+                message: String(format: NSLocalizedString("update_alert_uptodate_desc", comment: ""), currentVer),
+                icon: .appIcon,
+                buttons: [
+                    GlassAlertButton(title: NSLocalizedString("update_alert_uptodate_ok", comment: ""), role: .primary) {}
+                ]
+            )
 
         case .updateAvailable:
             promptOrStartUpgrade()
 
         case .failure(let errorMsg):
-            let alert = NSAlert()
-            alert.messageText = NSLocalizedString("update_alert_check_error_title", comment: "")
-            alert.informativeText = String(format: NSLocalizedString("update_alert_check_error_desc", comment: ""), errorMsg)
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: NSLocalizedString("update_btn_open_releases", comment: ""))
-            alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
-            if alert.runModal() == .alertFirstButtonReturn {
-                let channel = ReleaseChannel.channel(for: updateManager.currentVersion)
-                NSWorkspace.shared.open(channel.fallbackReleaseUrl)
-            }
+            let channel = ReleaseChannel.channel(for: updateManager.currentVersion)
+            GlassPanelManager.shared.showAlert(
+                title: NSLocalizedString("update_alert_check_error_title", comment: ""),
+                message: String(format: NSLocalizedString("update_alert_check_error_desc", comment: ""), errorMsg),
+                icon: .warningWithAppIcon,
+                buttons: [
+                    GlassAlertButton(title: NSLocalizedString("update_btn_open_releases", comment: ""), role: .primary) {
+                        NSWorkspace.shared.open(channel.fallbackReleaseUrl)
+                    },
+                    GlassAlertButton(title: NSLocalizedString("update_alert_cancel", comment: ""), role: .cancel) {}
+                ]
+            )
         }
     }
 
@@ -515,65 +528,74 @@ class MenuBarViewModel: ObservableObject {
         }
 
         NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = NSLocalizedString("update_alert_available_title", comment: "")
-
         let hasHomebrew = UpdateManager.isHomebrewInstalled
         if hasHomebrew {
-            alert.informativeText = String(format: NSLocalizedString("update_alert_available_desc", comment: ""), update.availableVersion)
-            alert.addButton(withTitle: NSLocalizedString("update_alert_confirm_brew", comment: ""))
-            alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
-            alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
-
-            let response = alert.runModal()
-            if response == .alertFirstButtonReturn {
-                performHomebrewUpgrade(caskName: update.caskName)
-            } else if response == .alertSecondButtonReturn {
-                NSWorkspace.shared.open(update.releaseUrl)
-            }
+            GlassPanelManager.shared.showAlert(
+                title: NSLocalizedString("update_alert_available_title", comment: ""),
+                message: String(format: NSLocalizedString("update_alert_available_desc", comment: ""), update.availableVersion),
+                icon: .appIcon,
+                buttons: [
+                    GlassAlertButton(title: NSLocalizedString("update_alert_confirm_brew", comment: ""), role: .primary) { [weak self] in
+                        self?.performHomebrewUpgrade(caskName: update.caskName)
+                    },
+                    GlassAlertButton(title: NSLocalizedString("update_alert_download_dmg", comment: ""), role: .regular) {
+                        NSWorkspace.shared.open(update.releaseUrl)
+                    },
+                    GlassAlertButton(title: NSLocalizedString("update_alert_cancel", comment: ""), role: .cancel) {}
+                ]
+            )
         } else {
-            alert.informativeText = String(format: NSLocalizedString("update_alert_available_desc_no_brew", comment: ""), update.availableVersion)
-            alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
-            alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
-
-            let response = alert.runModal()
-            if response == .alertFirstButtonReturn {
-                NSWorkspace.shared.open(update.releaseUrl)
-            }
+            GlassPanelManager.shared.showAlert(
+                title: NSLocalizedString("update_alert_available_title", comment: ""),
+                message: String(format: NSLocalizedString("update_alert_available_desc_no_brew", comment: ""), update.availableVersion),
+                icon: .appIcon,
+                buttons: [
+                    GlassAlertButton(title: NSLocalizedString("update_alert_download_dmg", comment: ""), role: .primary) {
+                        NSWorkspace.shared.open(update.releaseUrl)
+                    },
+                    GlassAlertButton(title: NSLocalizedString("update_alert_cancel", comment: ""), role: .cancel) {}
+                ]
+            )
         }
     }
 
     private func performHomebrewUpgrade(caskName: String) {
-        Task { @MainActor in
-            let result = await updateManager.upgradeViaHomebrew(caskName: caskName)
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            let result = await self.updateManager.upgradeViaHomebrew(caskName: caskName)
             switch result {
             case .success:
                 break
             case .homebrewNotFound:
-                let alert = NSAlert()
-                alert.messageText = NSLocalizedString("update_error_title", comment: "")
-                alert.informativeText = NSLocalizedString("update_error_no_brew", comment: "")
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
-                alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
-                if alert.runModal() == .alertFirstButtonReturn {
-                    if let update = self.availableUpdate ?? self.updateManager.availableUpdate {
-                        NSWorkspace.shared.open(update.releaseUrl)
-                    }
-                }
+                GlassPanelManager.shared.showAlert(
+                    title: NSLocalizedString("update_error_title", comment: ""),
+                    message: NSLocalizedString("update_error_no_brew", comment: ""),
+                    icon: .warningWithAppIcon,
+                    buttons: [
+                        GlassAlertButton(title: NSLocalizedString("update_alert_download_dmg", comment: ""), role: .primary) { [weak self] in
+                            if let update = self?.availableUpdate ?? self?.updateManager.availableUpdate {
+                                NSWorkspace.shared.open(update.releaseUrl)
+                            }
+                        },
+                        GlassAlertButton(title: NSLocalizedString("update_alert_cancel", comment: ""), role: .cancel) {}
+                    ]
+                )
             case .commandFailed(_, let output):
-                let alert = NSAlert()
-                alert.messageText = NSLocalizedString("update_error_title", comment: "")
                 let channel = self.availableUpdate?.channel ?? ReleaseChannel.channel(for: self.updateManager.currentVersion)
-                alert.informativeText = UpdateManager.formatErrorMessage(rawOutput: output, channel: channel)
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: NSLocalizedString("update_alert_download_dmg", comment: ""))
-                alert.addButton(withTitle: NSLocalizedString("update_alert_cancel", comment: ""))
-                if alert.runModal() == .alertFirstButtonReturn {
-                    if let update = self.availableUpdate ?? self.updateManager.availableUpdate {
-                        NSWorkspace.shared.open(update.releaseUrl)
-                    }
-                }
+                let errorDesc = UpdateManager.formatErrorMessage(rawOutput: output, channel: channel)
+                GlassPanelManager.shared.showAlert(
+                    title: NSLocalizedString("update_error_title", comment: ""),
+                    message: errorDesc,
+                    icon: .warningWithAppIcon,
+                    buttons: [
+                        GlassAlertButton(title: NSLocalizedString("update_alert_download_dmg", comment: ""), role: .primary) { [weak self] in
+                            if let update = self?.availableUpdate ?? self?.updateManager.availableUpdate {
+                                NSWorkspace.shared.open(update.releaseUrl)
+                            }
+                        },
+                        GlassAlertButton(title: NSLocalizedString("update_alert_cancel", comment: ""), role: .cancel) {}
+                    ]
+                )
             }
         }
     }
