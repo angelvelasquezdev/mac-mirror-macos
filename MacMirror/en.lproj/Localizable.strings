@@ -99,5 +99,7 @@
 "whats_new_low_latency_desc" = "Instant real-time notification streaming with guaranteed delivery acknowledgments.";
 "whats_new_e2ee_title" = "End-to-End Encryption";
 "whats_new_e2ee_desc" = "All notification payloads are protected using AES-256-GCM and ephemeral ECDH keys.";
+"whats_new_wifi_awareness_title" = "Smart Wi-Fi Awareness";
+"whats_new_wifi_awareness_desc" = "Instantly alerts you when Wi-Fi is disconnected with one-tap shortcuts to restore mirroring.";
 
 
