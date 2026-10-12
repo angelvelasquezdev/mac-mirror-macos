@@ -67,7 +67,7 @@ workflows:
             gh release upload "$CM_TAG" "$DMG_PATH" --clobber
           else
             gh release create "$CM_TAG" \
-              --title "MacMirror macOS $CM_TAG" \
+              --title "$CM_TAG" \
               --generate-notes \
               --prerelease \
               "$DMG_PATH"
@@ -194,7 +194,7 @@ workflows:
             gh release upload "$CM_TAG" "$DMG_PATH" --clobber
           else
             gh release create "$CM_TAG" \
-              --title "MacMirror macOS $CM_TAG" \
+              --title "$CM_TAG" \
               --generate-notes \
               "$DMG_PATH"
           fi
